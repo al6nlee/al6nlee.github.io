@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>01-深入了解NIO | 文斋</title>
+<meta name="keywords" content="redis, 数据库, NIO, epoll">
+<meta name="description" content="探讨了不同IO的演进过程，从传统阻塞IO说起，说到NIO、select、epoll">
+<meta name="author" content="alan">
+<link rel="canonical" href="https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/01-%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3nio.html">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.f49d66caae9ea0fd43f21f29e71a8d3e284517ed770f2aa86fa012953ad3c9ef.css" integrity="sha256-9J1myq6eoP1D8h8p5xqNPihFF&#43;13Dyqob6ASlTrTye8=" rel="preload stylesheet" as="style">
+<link rel="icon" href="https://al6nlee.github.io/images/system/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://al6nlee.github.io/images/system/favicon16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://al6nlee.github.io/images/system/favicon32x32.png">
+<link rel="apple-touch-icon" href="https://al6nlee.github.io/images/system/apple-touch-icon.png">
+<link rel="mask-icon" href="https://al6nlee.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh" href="https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/01-%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3nio.html">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:url" content="https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/01-%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3nio.html">
+  <meta property="og:site_name" content="文斋">
+  <meta property="og:title" content="01-深入了解NIO">
+  <meta property="og:description" content="探讨了不同IO的演进过程，从传统阻塞IO说起，说到NIO、select、epoll">
+  <meta property="og:locale" content="zh-CN">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="post">
+    <meta property="article:published_time" content="2025-05-10T22:49:50+08:00">
+    <meta property="article:modified_time" content="2025-05-11T18:23:01+08:00">
+    <meta property="article:tag" content="Redis">
+    <meta property="article:tag" content="数据库">
+    <meta property="article:tag" content="NIO">
+    <meta property="article:tag" content="Epoll">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="01-深入了解NIO">
+<meta name="twitter:description" content="探讨了不同IO的演进过程，从传统阻塞IO说起，说到NIO、select、epoll">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://al6nlee.github.io/post.html"
+    }
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "01-深入了解NIO",
+      "item": "https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/01-%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3nio.html"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "01-深入了解NIO",
+  "name": "01-深入了解NIO",
+  "description": "探讨了不同IO的演进过程，从传统阻塞IO说起，说到NIO、select、epoll\n",
+  "keywords": [
+    "redis", "数据库", "NIO", "epoll"
+  ],
+  "articleBody": "探讨了不同IO的演进过程，从传统阻塞IO说起，说到NIO、select、epoll\n传统阻塞IO public Order queryOrder() { // 这里会卡住，直到订单服务返回订单信息，read()方法才会返回 Order order = orderConnection.read(); // 查询订单信息 log.info(\"查询订单信息, 收到返回 {}\", order); return order; } 当执行orderConnection.read()时，因为不能确定订单服务多久返回 为了避免干等，浪费资源，操作系统会暂停当前线程，转而去执行其他程序 等到订单服务返回了了，再恢复执行 注意：IO操作和线程是耦合在一起的，如果IO操作被阻塞了，整个线程都会被挂起\n优点 对开发人员友好，非常简单，符合直觉\n缺点 IO操作会阻塞整个线程，每个连接都需要对应一个专门的线程 以Java为例，线程默认的栈大小是1M 要同时处理10万个连接，就需要10万个线程，光是线程的栈内存就要100G\n-\u003e 为了避免创建的线程太多，耗尽内存，阻塞IO通常配合线程池使用\n非阻塞IO 默认情况下，IO操作被阻塞时，操作系统会挂起线程 但也可以在创建连接时，开启O_NONBLOCK选项，让操作系统不挂起线程，而是直接返回\npublic void mainLoop() { Connection conn1 = open(O_NONBLOCK); Connection conn2 = open(O_NONBLOCK); Connection conn3 = open(O_NONBLOCK); List\u003cConnection\u003e connections = List.of(conn1, conn2, conn3); while(true) { for(Connection conn : connections) { // 由于设置了O_NONBLOCK选项，这里不会阻塞 Object data = conn.read(); if(data != null) { System.out.println(data); } } } } 优点 解决了IO操作导致整个线程挂起的问题，可以实现一个线程同时处理多个连接\n缺点 不停地轮询会带来很多无效的操作，也会导致CPU使用率飙高\nIO多路复用 因为不知道连接什么时候会收到数据，所以非阻塞IO要不停地重试，导致CPU飙高\n-\u003e 不要自己盲目的去试，而是让连接在收到数据之后，主动通知自己\n也就是，实现了一套wait - notify的事件通知机制\n// 监控指定的连接，并且阻塞调用select()的线程 // 直到有连接就绪或者超过timeout时间，再唤醒select线程并返回 // nfds表示需要检查的文件句柄（连接）的数量 // readfds,writefds,exceptfds表示要监听的文件句柄(连接) // timeout表示超时时间 int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout); int main(void) { // 主循环 for(;;) { // 将连接就绪的标志位清零： // select会通过修改入参的方式指明哪些连接就绪了 // 所以每次调用select之前，都要先把连接就绪的标志位清零 FD_SET(0, \u0026rfds); // 探测是否有连接就绪；当前线程会被挂起，直到有连接就绪或者超时 int retval = select(n, \u0026rfds, NULL, NULL, \u0026tv); if (retval == -1) perror(\"调用select出错\"); else if (retval) printf(\"有连接就绪\"); for (j = 0; j \u003c= n; j++) { // select会通过修改入参的方式，指明哪些连接就绪了 // 这里遍历所有连接，判断是否就绪 if(FD_ISSET(j, rfds)) { // select只是探测哪些连接就绪了，但不会实际读取数据 // 这里通过revc()方法实际读取数据 recv(rfds[j]) } } else printf(\"在超时时间内没有任何连接就绪\"); } } select 实现细节 调用select()时，给所有要监控的连接注册回调函数 回调函数是注册在连接的wait_queue里 挂起select线程，等待连接就绪 当连接收到数据时，会触发回调函数，并恢复select线程 当某个连接收到了远程服务的响应，它就会执行自己wait_queue里回调函数，并唤醒select线程 回调函数会设置好哪些连接就绪了，并移除所有连接wait_queue里的回调函数（类似于资源清理） select线程恢复执行后，就可以处理就绪的连接 优点 实现了一套wait-notify机制，相比于不停地轮询，效率更高\n缺点 select()每次都要在全量的连接上，先逐个注册回调函数，再逐个移除回调函数 复杂度是O(n)，其中n是要监控的连接数 select()只是返回哪些连接就绪了，还需要再额外调用recv()实际读取数据 epoll select()每次都要在全量的连接上，先逐个注册回调函数，再逐个移除回调函数\nepoll通过将API细分为3个，将全量操作优化成了增量操作\nepoll_create() 初始化epoll自己要用的内部结构 epoll_ctl() 添加或者删除要监听的连接 epoll_wait() 挂起调用线程，等待连接事件，当有连接就绪时，或者超时返回 优点 分了3个API，epoll_create() / epoll_ctl() / epoll_wait() 实现了增量操作 结合红黑树，将算法复杂度降低到了O(lgN)\n# define MAX_EVENTS 10 struct epoll_event ev, events[MAX_EVENTS]; int listen_sock, cAonn_sock, nfds, epollfd; /* Code to set up listening socket, 'listen_sock', (socket(), bind(), listen()) omitted */ // 创建epoll内部用到的结构 epollfd = epoll_create1(0); if (epollfd == -1) { perror(\"epoll_create1\"); exit(EXIT_FAILURE); } // 将listen socket作为一个事件源添加到epoll的监听队列中 ev.events = EPOLLIN; ev.data.fd = listen_sock; if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_sock, \u0026ev) == -1) { perror(\"epoll_ctl: listen_sock\"); exit(EXIT_FAILURE); } // 主循环 for (;;) { // 探测是否有就绪的连接 nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1); if (nfds == -1) { perror(\"epoll_wait\"); exit(EXIT_FAILURE); } // 对所有就绪的连接，逐个处理连接上的事件 for (n = 0; n \u003c nfds; ++n) { if (events[n].data.fd == listen_sock) { // 如果是新建连接事件，完成连接建立 conn_sock = accept(listen_sock, (struct sockaddr *) \u0026addr, \u0026addrlen); if (conn_sock == -1) { perror(\"accept\"); exit(EXIT_FAILURE); } setnonblocking(conn_sock); ev.events = EPOLLIN | EPOLLET; ev.data.fd = conn_sock; // 将新建立的连接作为事件源，添加到epoll的监听队列 if (epoll_ctl(epollfd, EPOLL_CTL_ADD, conn_sock, \u0026ev) == -1) { perror(\"epoll_ctl: conn_sock\"); exit(EXIT_FAILURE); } } else { // 对于读写事件，根据业务需求做相应的处理 // 同样的，到这一步只是知道哪个连接就绪了，还没有实际读取数据 // 一些对性能要求特别高的场景，会选择用专门的IO线程来读取数据 // 比如redis 6.0以后，就加入了专门的IO线程 do_use_fd(events[n].data.fd); } } } 总结 处理IO的方式 优点 缺点 传统阻塞IO 对开发人员友好，写代码简单 连接和线程耦合在了一起，每个连接都有对应一个线程，限制了一台机器能处理的最大连接数\nPS: 为了避免内存耗尽，阻塞IO通常配合线程池使用 非阻塞IO\nO_NONBLOCK 通过设置O_NONBLOCK标志位，让操作系统不挂起当前线程，可以实现一个线程同时处理多个连接 不停地轮询效率低，浪费CPU资源 IO多路复用select() 实现了wait-notify机制，比轮询效率高 每次调用select()都需要准备相关参数，修改所有连接句柄的wait_queue，算法复杂度较高 – O(n) epoll 通过epoll_create() / epoll_ctl() / epoll_wait()3个API，在epoll内部管理相关的参数和结构，实现了增量操作，效率更高 – O(lgN) 单个线程管理连接数过多时，epoll_wait线程本身可能成为瓶颈，可以用多epoll_wait线程 + 多IO线程的策略解决 ",
+  "wordCount" : "2459",
+  "inLanguage": "zh",
+  "datePublished": "2025-05-10T22:49:50+08:00",
+  "dateModified": "2025-05-11T18:23:01+08:00",
+  "author":[{
+    "@type": "Person",
+    "name": "alan"
+  }],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/01-%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3nio.html"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "文斋",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://al6nlee.github.io/images/system/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://al6nlee.github.io/" accesskey="h" title="文斋 (Alt + H)">文斋</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://al6nlee.github.io/search.html" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://al6nlee.github.io/active.html" title="档案">
+                    <span>档案</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://al6nlee.github.io/categories.html" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://al6nlee.github.io/tags.html" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://al6nlee.github.io/about.html" title="关于">
+                    <span>关于</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      01-深入了解NIO
+    </h1>
+    <div class="post-meta"><span title='2025-05-11 18:23:01 +0800 +0800'>五月 11, 2025</span>&nbsp;·&nbsp;5 分钟&nbsp;·&nbsp;2459 字&nbsp;·&nbsp;alan
+
+</div>
+  </header> <div class="toc">
+    <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">目录</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e4%bc%a0%e7%bb%9f%e9%98%bb%e5%a1%9eio" aria-label="传统阻塞IO">传统阻塞IO</a><ul>
+                        
+                <li>
+                    <a href="#%e4%bc%98%e7%82%b9" aria-label="优点">优点</a></li>
+                <li>
+                    <a href="#%e7%bc%ba%e7%82%b9" aria-label="缺点">缺点</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e9%9d%9e%e9%98%bb%e5%a1%9eio" aria-label="非阻塞IO">非阻塞IO</a><ul>
+                        
+                <li>
+                    <a href="#%e4%bc%98%e7%82%b9-1" aria-label="优点">优点</a></li>
+                <li>
+                    <a href="#%e7%bc%ba%e7%82%b9-1" aria-label="缺点">缺点</a></li></ul>
+                </li>
+                <li>
+                    <a href="#io%e5%a4%9a%e8%b7%af%e5%a4%8d%e7%94%a8" aria-label="IO多路复用">IO多路复用</a><ul>
+                        
+                <li>
+                    <a href="#select-%e5%ae%9e%e7%8e%b0%e7%bb%86%e8%8a%82" aria-label="select 实现细节">select 实现细节</a></li>
+                <li>
+                    <a href="#%e4%bc%98%e7%82%b9-2" aria-label="优点">优点</a></li>
+                <li>
+                    <a href="#%e7%bc%ba%e7%82%b9-2" aria-label="缺点">缺点</a></li></ul>
+                </li>
+                <li>
+                    <a href="#epoll" aria-label="epoll">epoll</a><ul>
+                        
+                <li>
+                    <a href="#%e4%bc%98%e7%82%b9-3" aria-label="优点">优点</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e6%80%bb%e7%bb%93" aria-label="总结">总结</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><p>探讨了不同IO的演进过程，从传统阻塞IO说起，说到NIO、select、epoll</p>
+<h2 id="传统阻塞io">传统阻塞IO<a hidden class="anchor" aria-hidden="true" href="#传统阻塞io">#</a></h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> Order <span style="color:#a6e22e">queryOrder</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// 这里会卡住，直到订单服务返回订单信息，read()方法才会返回</span>
+</span></span><span style="display:flex;"><span>  Order order <span style="color:#f92672">=</span> orderConnection.<span style="color:#a6e22e">read</span>(); <span style="color:#75715e">// 查询订单信息</span>
+</span></span><span style="display:flex;"><span>  log.<span style="color:#a6e22e">info</span>(<span style="color:#e6db74">&#34;查询订单信息, 收到返回 {}&#34;</span>, order);
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> order;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li>当执行<code>orderConnection.read()</code>时，因为不能确定订单服务多久返回</li>
+<li>为了避免干等，浪费资源，操作系统会暂停当前线程，转而去执行其他程序</li>
+<li>等到订单服务返回了了，再恢复执行</li>
+</ul>
+<blockquote>
+<p>注意：<strong>IO操作和线程是耦合在一起的，如果IO操作被阻塞了，整个线程都会被挂起</strong></p></blockquote>
+<h3 id="优点">优点<a hidden class="anchor" aria-hidden="true" href="#优点">#</a></h3>
+<p>对开发人员友好，非常简单，符合直觉</p>
+<h3 id="缺点">缺点<a hidden class="anchor" aria-hidden="true" href="#缺点">#</a></h3>
+<p>IO操作会阻塞整个线程，<strong>每个连接都需要对应一个专门的线程</strong>
+以Java为例，线程默认的栈大小是1M
+要同时处理10万个连接，就需要10万个线程，光是线程的栈内存就要100G</p>
+<p>-&gt; 为了避免创建的线程太多，<strong>耗尽内存</strong>，阻塞IO通常配合线程池使用</p>
+<h2 id="非阻塞io">非阻塞IO<a hidden class="anchor" aria-hidden="true" href="#非阻塞io">#</a></h2>
+<p>默认情况下，IO操作被阻塞时，操作系统会挂起线程
+但也可以在创建连接时，开启<code>O_NONBLOCK</code>选项，让操作系统不挂起线程，而是直接返回</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">mainLoop</span>() {
+</span></span><span style="display:flex;"><span>  Connection conn1 <span style="color:#f92672">=</span> open(O_NONBLOCK);
+</span></span><span style="display:flex;"><span>  Connection conn2 <span style="color:#f92672">=</span> open(O_NONBLOCK);
+</span></span><span style="display:flex;"><span>  Connection conn3 <span style="color:#f92672">=</span> open(O_NONBLOCK);
+</span></span><span style="display:flex;"><span>  List<span style="color:#f92672">&lt;</span>Connection<span style="color:#f92672">&gt;</span> connections <span style="color:#f92672">=</span> List.<span style="color:#a6e22e">of</span>(conn1, conn2, conn3);
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">while</span>(<span style="color:#66d9ef">true</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span>(Connection conn : connections) {
+</span></span><span style="display:flex;"><span>      <span style="color:#75715e">// 由于设置了O_NONBLOCK选项，这里不会阻塞</span>
+</span></span><span style="display:flex;"><span>      Object data <span style="color:#f92672">=</span> conn.<span style="color:#a6e22e">read</span>();
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">if</span>(data <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>        System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">println</span>(data);      
+</span></span><span style="display:flex;"><span>      }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="优点-1">优点<a hidden class="anchor" aria-hidden="true" href="#优点-1">#</a></h3>
+<p>解决了IO操作导致整个线程挂起的问题，可以<strong>实现一个线程同时处理多个连接</strong></p>
+<h3 id="缺点-1">缺点<a hidden class="anchor" aria-hidden="true" href="#缺点-1">#</a></h3>
+<p>不停地轮询会带来很多无效的操作，也会导致<strong>CPU使用率飙高</strong></p>
+<h2 id="io多路复用">IO多路复用<a hidden class="anchor" aria-hidden="true" href="#io多路复用">#</a></h2>
+<p>因为不知道连接什么时候会收到数据，所以非阻塞IO要不停地重试，导致CPU飙高</p>
+<p>-&gt; <strong>不要自己盲目的去试，而是让连接在收到数据之后，主动通知自己</strong></p>
+<p>也就是，实现了一套wait - notify的事件通知机制</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#75715e">// 监控指定的连接，并且阻塞调用select()的线程
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 直到有连接就绪或者超过timeout时间，再唤醒select线程并返回
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// nfds表示需要检查的文件句柄（连接）的数量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// readfds,writefds,exceptfds表示要监听的文件句柄(连接)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// timeout表示超时时间
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">select</span>(<span style="color:#66d9ef">int</span> nfds, fd_set <span style="color:#f92672">*</span>readfds, fd_set <span style="color:#f92672">*</span>writefds,
+</span></span><span style="display:flex;"><span>                  fd_set <span style="color:#f92672">*</span>exceptfds, <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">timeval</span> <span style="color:#f92672">*</span>timeout);
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">void</span>) {
+</span></span><span style="display:flex;"><span>   <span style="color:#75715e">// 主循环
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>   <span style="color:#66d9ef">for</span>(;;) {
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">// 将连接就绪的标志位清零：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>     <span style="color:#75715e">// select会通过修改入参的方式指明哪些连接就绪了
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>     <span style="color:#75715e">// 所以每次调用select之前，都要先把连接就绪的标志位清零
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>     FD_SET(<span style="color:#ae81ff">0</span>, <span style="color:#f92672">&amp;</span>rfds);
+</span></span><span style="display:flex;"><span>     
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">// 探测是否有连接就绪；当前线程会被挂起，直到有连接就绪或者超时
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>     <span style="color:#66d9ef">int</span> retval <span style="color:#f92672">=</span> select(n, <span style="color:#f92672">&amp;</span>rfds, NULL, NULL, <span style="color:#f92672">&amp;</span>tv);
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">if</span> (retval <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>       perror(<span style="color:#e6db74">&#34;调用select出错&#34;</span>);
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> (retval)
+</span></span><span style="display:flex;"><span>       printf(<span style="color:#e6db74">&#34;有连接就绪&#34;</span>);
+</span></span><span style="display:flex;"><span>       <span style="color:#66d9ef">for</span> (j <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; j <span style="color:#f92672">&lt;=</span> n; j<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>         <span style="color:#75715e">// select会通过修改入参的方式，指明哪些连接就绪了
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#75715e">// 这里遍历所有连接，判断是否就绪
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>         <span style="color:#66d9ef">if</span>(FD_ISSET(j, rfds)) {
+</span></span><span style="display:flex;"><span>           <span style="color:#75715e">// select只是探测哪些连接就绪了，但不会实际读取数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>           <span style="color:#75715e">// 这里通过revc()方法实际读取数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>           recv(rfds[j])
+</span></span><span style="display:flex;"><span>         }
+</span></span><span style="display:flex;"><span>       }
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>       printf(<span style="color:#e6db74">&#34;在超时时间内没有任何连接就绪&#34;</span>);
+</span></span><span style="display:flex;"><span>   }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="select-实现细节">select 实现细节<a hidden class="anchor" aria-hidden="true" href="#select-实现细节">#</a></h3>
+<ol>
+<li>调用<code>select()</code>时，给所有要监控的连接注册回调函数 回调函数是注册在连接的<code>wait_queue</code>里</li>
+<li>挂起select线程，等待连接就绪</li>
+<li>当连接收到数据时，会触发回调函数，并恢复select线程 当某个连接收到了远程服务的响应，它就会执行自己<code>wait_queue</code>里回调函数，并唤醒select线程 回调函数会设置好哪些连接就绪了，并移除所有连接<code>wait_queue</code>里的回调函数（类似于资源清理）</li>
+<li>select线程恢复执行后，就可以处理就绪的连接</li>
+</ol>
+<h3 id="优点-2">优点<a hidden class="anchor" aria-hidden="true" href="#优点-2">#</a></h3>
+<p>实现了一套wait-notify机制，相比于不停地轮询，效率更高</p>
+<h3 id="缺点-2">缺点<a hidden class="anchor" aria-hidden="true" href="#缺点-2">#</a></h3>
+<ol>
+<li><code>select()</code>每次都要在全量的连接上，先逐个注册回调函数，再逐个移除回调函数 复杂度是<code>O(n)</code>，其中n是要监控的连接数</li>
+<li><code>select()</code>只是返回哪些连接就绪了，还需要再额外调用<code>recv()</code>实际读取数据</li>
+</ol>
+<h2 id="epoll">epoll<a hidden class="anchor" aria-hidden="true" href="#epoll">#</a></h2>
+<p><code>select()</code>每次都要在全量的连接上，先逐个注册回调函数，再逐个移除回调函数</p>
+<p><code>epoll</code>通过将API细分为3个，将<strong>全量</strong>操作优化成了<strong>增量</strong>操作</p>
+<ol>
+<li><code>epoll_create()</code> 初始化epoll自己要用的内部结构</li>
+<li><code>epoll_ctl()</code> 添加或者删除要监听的连接</li>
+<li><code>epoll_wait()</code> 挂起调用线程，等待连接事件，当有连接就绪时，或者超时返回</li>
+</ol>
+<h3 id="优点-3">优点<a hidden class="anchor" aria-hidden="true" href="#优点-3">#</a></h3>
+<p>分了3个API，<code>epoll_create()</code> / <code>epoll_ctl()</code> / <code>epoll_wait()</code> 实现了<strong>增量</strong>操作
+结合红黑树，将算法复杂度降低到了<code>O(lgN)</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C++" data-lang="C++"><span style="display:flex;"><span><span style="color:#75715e"># define MAX_EVENTS 10
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">epoll_event</span> ev, events[MAX_EVENTS];
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> listen_sock, cAonn_sock, nfds, epollfd;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/* Code to set up listening socket, &#39;listen_sock&#39;,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">  (socket(), bind(), listen()) omitted */</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 创建epoll内部用到的结构
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>epollfd <span style="color:#f92672">=</span> epoll_create1(<span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (epollfd <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>   perror(<span style="color:#e6db74">&#34;epoll_create1&#34;</span>);
+</span></span><span style="display:flex;"><span>   exit(EXIT_FAILURE);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 将listen socket作为一个事件源添加到epoll的监听队列中
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>ev.events <span style="color:#f92672">=</span> EPOLLIN;
+</span></span><span style="display:flex;"><span>ev.data.fd <span style="color:#f92672">=</span> listen_sock;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_sock, <span style="color:#f92672">&amp;</span>ev) <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>   perror(<span style="color:#e6db74">&#34;epoll_ctl: listen_sock&#34;</span>);
+</span></span><span style="display:flex;"><span>   exit(EXIT_FAILURE);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 主循环
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">for</span> (;;) {
+</span></span><span style="display:flex;"><span>   <span style="color:#75715e">// 探测是否有就绪的连接
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>   nfds <span style="color:#f92672">=</span> epoll_wait(epollfd, events, MAX_EVENTS, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span>   <span style="color:#66d9ef">if</span> (nfds <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>       perror(<span style="color:#e6db74">&#34;epoll_wait&#34;</span>);
+</span></span><span style="display:flex;"><span>       exit(EXIT_FAILURE);
+</span></span><span style="display:flex;"><span>   }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>   <span style="color:#75715e">// 对所有就绪的连接，逐个处理连接上的事件
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>   <span style="color:#66d9ef">for</span> (n <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; n <span style="color:#f92672">&lt;</span> nfds; <span style="color:#f92672">++</span>n) {
+</span></span><span style="display:flex;"><span>       <span style="color:#66d9ef">if</span> (events[n].data.fd <span style="color:#f92672">==</span> listen_sock) {
+</span></span><span style="display:flex;"><span>           <span style="color:#75715e">// 如果是新建连接事件，完成连接建立
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>           conn_sock <span style="color:#f92672">=</span> accept(listen_sock,
+</span></span><span style="display:flex;"><span>                              (<span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">sockaddr</span> <span style="color:#f92672">*</span>) <span style="color:#f92672">&amp;</span>addr, <span style="color:#f92672">&amp;</span>addrlen);
+</span></span><span style="display:flex;"><span>           <span style="color:#66d9ef">if</span> (conn_sock <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>               perror(<span style="color:#e6db74">&#34;accept&#34;</span>);
+</span></span><span style="display:flex;"><span>               exit(EXIT_FAILURE);
+</span></span><span style="display:flex;"><span>           }
+</span></span><span style="display:flex;"><span>           setnonblocking(conn_sock);
+</span></span><span style="display:flex;"><span>           ev.events <span style="color:#f92672">=</span> EPOLLIN <span style="color:#f92672">|</span> EPOLLET;
+</span></span><span style="display:flex;"><span>           ev.data.fd <span style="color:#f92672">=</span> conn_sock;
+</span></span><span style="display:flex;"><span>           <span style="color:#75715e">// 将新建立的连接作为事件源，添加到epoll的监听队列
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>           <span style="color:#66d9ef">if</span> (epoll_ctl(epollfd, EPOLL_CTL_ADD, conn_sock, <span style="color:#f92672">&amp;</span>ev) <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>               perror(<span style="color:#e6db74">&#34;epoll_ctl: conn_sock&#34;</span>);
+</span></span><span style="display:flex;"><span>               exit(EXIT_FAILURE);
+</span></span><span style="display:flex;"><span>           }
+</span></span><span style="display:flex;"><span>       } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>           <span style="color:#75715e">// 对于读写事件，根据业务需求做相应的处理
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>           <span style="color:#75715e">// 同样的，到这一步只是知道哪个连接就绪了，还没有实际读取数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>           <span style="color:#75715e">// 一些对性能要求特别高的场景，会选择用专门的IO线程来读取数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>           <span style="color:#75715e">// 比如redis 6.0以后，就加入了专门的IO线程
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>           do_use_fd(events[n].data.fd);
+</span></span><span style="display:flex;"><span>       }
+</span></span><span style="display:flex;"><span>   }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="总结">总结<a hidden class="anchor" aria-hidden="true" href="#总结">#</a></h2>
+<table>
+  <thead>
+      <tr>
+          <th>处理IO的方式</th>
+          <th>优点</th>
+          <th>缺点</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>传统阻塞IO</td>
+          <td>对开发人员友好，写代码简单</td>
+          <td>连接和线程耦合在了一起，每个连接都有对应一个线程，限制了一台机器能处理的最大连接数<br><br>PS: 为了避免内存耗尽，阻塞IO通常配合线程池使用</td>
+      </tr>
+      <tr>
+          <td>非阻塞IO<br><br><code>O_NONBLOCK</code></td>
+          <td>通过设置<code>O_NONBLOCK</code>标志位，让操作系统不挂起当前线程，可以实现一个线程同时处理多个连接</td>
+          <td>不停地轮询效率低，浪费CPU资源</td>
+      </tr>
+      <tr>
+          <td>IO多路复用<code>select()</code></td>
+          <td>实现了wait-notify机制，比轮询效率高</td>
+          <td>每次调用<code>select()</code>都需要准备相关参数，修改所有连接句柄的<code>wait_queue</code>，算法复杂度较高 &ndash; <code>O(n)</code></td>
+      </tr>
+      <tr>
+          <td><code>epoll</code></td>
+          <td>通过<code>epoll_create()</code> / <code>epoll_ctl()</code> / <code>epoll_wait()</code>3个API，在<code>epoll</code>内部管理相关的参数和结构，实现了增量操作，效率更高 &ndash; <code>O(lgN)</code></td>
+          <td>单个线程管理连接数过多时，epoll_wait线程本身可能成为瓶颈，可以用多epoll_wait线程 + 多IO线程的策略解决</td>
+      </tr>
+  </tbody>
+</table>
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="https://al6nlee.github.io/tags/redis.html">Redis</a></li>
+      <li><a href="https://al6nlee.github.io/tags/%E6%95%B0%E6%8D%AE%E5%BA%93.html">数据库</a></li>
+      <li><a href="https://al6nlee.github.io/tags/nio.html">NIO</a></li>
+      <li><a href="https://al6nlee.github.io/tags/epoll.html">Epoll</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="next" href="https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/02-epoll%E7%BC%96%E7%A8%8B%E7%AE%80%E6%9E%90.html">
+    <span class="title">下一页 »</span>
+    <br>
+    <span>02-epoll编程简析</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2025 <a href="https://al6nlee.github.io/">文斋</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = '复制';
+
+        function copyingDone() {
+            copybutton.innerHTML = '已复制！';
+            setTimeout(() => {
+                copybutton.innerHTML = '复制';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

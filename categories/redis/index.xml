@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>Posts on 文斋</title>
-    <link>https://al6nlee.github.io/post.html</link>
-    <description>Recent content in Posts on 文斋</description>
+    <title>Redis on 文斋</title>
+    <link>https://al6nlee.github.io/categories/redis.html</link>
+    <description>Recent content in Redis on 文斋</description>
     <generator>Hugo -- 0.147.2</generator>
     <language>zh-CN</language>
     <lastBuildDate>Sun, 11 May 2025 18:33:52 +0800</lastBuildDate>
-    <atom:link href="https://al6nlee.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://al6nlee.github.io/categories/redis/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>01-深入了解NIO</title>
       <link>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/01-%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3nio.html</link>

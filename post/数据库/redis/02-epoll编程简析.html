@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>02-epoll编程简析 | 文斋</title>
+<meta name="keywords" content="数据库, redis, epoll">
+<meta name="description" content="本文简述了epoll出来前，在C10K上的难点问题，阐述了epoll变成思路，最后将redis2.6.4进行了案例分析">
+<meta name="author" content="alan">
+<link rel="canonical" href="https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/02-epoll%E7%BC%96%E7%A8%8B%E7%AE%80%E6%9E%90.html">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.f49d66caae9ea0fd43f21f29e71a8d3e284517ed770f2aa86fa012953ad3c9ef.css" integrity="sha256-9J1myq6eoP1D8h8p5xqNPihFF&#43;13Dyqob6ASlTrTye8=" rel="preload stylesheet" as="style">
+<link rel="icon" href="https://al6nlee.github.io/images/system/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://al6nlee.github.io/images/system/favicon16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://al6nlee.github.io/images/system/favicon32x32.png">
+<link rel="apple-touch-icon" href="https://al6nlee.github.io/images/system/apple-touch-icon.png">
+<link rel="mask-icon" href="https://al6nlee.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh" href="https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/02-epoll%E7%BC%96%E7%A8%8B%E7%AE%80%E6%9E%90.html">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:url" content="https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/02-epoll%E7%BC%96%E7%A8%8B%E7%AE%80%E6%9E%90.html">
+  <meta property="og:site_name" content="文斋">
+  <meta property="og:title" content="02-epoll编程简析">
+  <meta property="og:description" content="本文简述了epoll出来前，在C10K上的难点问题，阐述了epoll变成思路，最后将redis2.6.4进行了案例分析">
+  <meta property="og:locale" content="zh-CN">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="post">
+    <meta property="article:published_time" content="2025-05-10T22:51:20+08:00">
+    <meta property="article:modified_time" content="2025-05-11T18:23:06+08:00">
+    <meta property="article:tag" content="数据库">
+    <meta property="article:tag" content="Redis">
+    <meta property="article:tag" content="Epoll">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="02-epoll编程简析">
+<meta name="twitter:description" content="本文简述了epoll出来前，在C10K上的难点问题，阐述了epoll变成思路，最后将redis2.6.4进行了案例分析">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://al6nlee.github.io/post.html"
+    }
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "02-epoll编程简析",
+      "item": "https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/02-epoll%E7%BC%96%E7%A8%8B%E7%AE%80%E6%9E%90.html"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "02-epoll编程简析",
+  "name": "02-epoll编程简析",
+  "description": "本文简述了epoll出来前，在C10K上的难点问题，阐述了epoll变成思路，最后将redis2.6.4进行了案例分析\n",
+  "keywords": [
+    "数据库", "redis", "epoll"
+  ],
+  "articleBody": "本文简述了epoll出来前，在C10K上的难点问题，阐述了epoll变成思路，最后将redis2.6.4进行了案例分析\nC10K问题 简单些理解就是: 实现单机1万长连接\n在epoll之前，问题难点主要是 线程与连接是耦合的，一个连接对应一个线程 epoll编程思路 业务场景 作为服务端，我们只需要处理3种情况：\n处理客户端的连接请求 处理客户端发送的命令 返回响应给客户端 动作 对应事件 处理逻辑说明 处理客户端连接请求 listen_sock上的READABLE事件 对应listen_sock的read handler\n1. 新建一个client_sock，完成TCP 3次握手\n2. 将新的client_sock作为事件源注册到epoll 处理客户端命令 client_sock上的READABLE事件 对应client_sock的read handler\n读取客户端发送的命令，解析执行，并返回结果给客户端 返回应答给客户端 client_sock上的WRITABLE事件 对应client_sock的write handler\n为了防止发送方发的太快，接收方处理不过来，TCP协议是有一个滑动窗口的。A给B发消息时，会保证发送的内容大小不超过B当前的剩余缓冲区 如果服务端返回结果很大，超过了客户端的当前剩余缓冲区，那就只能先写一部分，并且用一个专门的字段记录写了多少。等到客户端腾出空间了，会再通知服务端。这时候，服务端就会触发写就绪事件，再把之前剩余的内容写到客户端 #define MAX_EVENTS 10 struct epoll_event ev, events[MAX_EVENTS]; int listen_sock, cAonn_sock, nfds, epollfd; /* Code to set up listening socket, 'listen_sock', (socket(), bind(), listen()) omitted */ // 创建epoll内部用到的结构 epollfd = epoll_create1(0); // 将server socket作为一个事件源添加到epoll的监听队列中 ev.events = EPOLLIN; ev.data.fd = listen_sock; if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_sock, \u0026ev) == -1) { perror(\"epoll_ctl: listen_sock\"); exit(EXIT_FAILURE); } // epoll主循环 for (;;) { // 探测是否有就绪的连接 nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1); // 对所有就绪的连接，逐个处理连接上的事件 for (n = 0; n \u003c nfds; ++n) { // 如果是在server socket上发生的事件， // 那一定是有新的客户端要建立连接 if (events[n].data.fd == listen_sock) { // 完成连接建立 conn_sock = accept(listen_sock, (struct sockaddr *) \u0026addr, \u0026addrlen); // 设置非阻塞标记位 setnonblocking(conn_sock); ev.events = EPOLLIN | EPOLLET; ev.data.fd = conn_sock; // 将新建立的连接作为事件源，添加到epoll的监听队列 if (epoll_ctl(epollfd, EPOLL_CTL_ADD, conn_sock, \u0026ev) == -1) { perror(\"epoll_ctl: conn_sock\"); exit(EXIT_FAILURE); } } else { // 对于读写事件，根据业务需求做相应的处理 do_use_fd(events[n].data.fd); } } } 边缘/水平触发 边缘触发（edge triggered） 和 水平触发（level triggered）\n客户端发过来的命令可能还不完整 此时，你有2种选择：\n直接不读取缓冲区，等到命令完整了，再一次性读出来 先把不完整的命令读出来，暂存起来 默认情况下，只要缓冲区有数据，就会触发事件\n第一种方式下，如果命令一直不完整，就会一直重复触发事件，影响性能 第二种方式下，因为已经读了缓冲区，所以不会重复触发事件，性能好，但需要自己维护一个暂存区，比较麻烦 由此，对应epoll的2种事件触发类型\n触发类型 触发规则 优缺点 水平触发 只要可以读/写，就不断触发\n1. 读 只要读缓冲区有数据就触发\n2. 写 只要写缓冲区不满就触发 有无效触发，性能差\n不需要自己维护暂存区，编程简单 边缘触发 状态变化才触发\n1. 读 从不可读变成可读才触发 读缓冲区从没有数据变成有数据才触发 如果前一次的数据没读完，又来了新数据，是不触发的 2. 写 从不可写变成可写才触发 写缓冲区从没有剩余空间变成有剩余空间 没有无效触发，性能好\n需要自己维护暂存区，编程复杂 epoll案例分析: redis2.6.4 注册listen_sock的read handler 关键方法 重点代码截图 redis.c\nmain() redis.c\ninitServer()\n注册listen_sock的读就绪事件处理器acceptTcpHandler()，\n后续会具体分析这个处理器 ae.c\naeCreateFileEvent() ae_epoll.c\naeApiAddEvent() 启动epoll主循环 关键方法 重点代码截图 redis.c\nmain() ae.c\naeMain() ae.c\naeProcessEvents()\n注意：\n1. fe-\u003erfileProc 对应读就绪事件的handler\n2. fe-\u003ewfileProc 对应写就绪事件的handler ae_epoll.c\naeApiPoll() 连接建立流程 客户端和服务端建立连接的过程，对应的就是listen_sock的read handler\n关键方法 重点代码截图 networking.c\nacceptTcpHandler()\n1. 完成连接建立（3次握手）\n2. 通过acceptCommonHandler()完成后续操作 networking.c\nacceptCommonHandler() networking.c\ncreateClient()\n注册新创建的client_sock的读事件处理器到epoll 处理请求流程 请求处理流程，对应的就是client_sock的read handler\n关键方法 重点代码截图 networking.c\nreadQueryFromClient()\n读取客户端请求，并调用**processInputBuffer()**处理 networking.c\nprocessInputBuffer() 返回结果流程 返回结果时，不是直接通过write()写数据到客户端，而是同样走epoll\n先注册client_sock的write handler，然后往暂存区追加数据 由于redis用的是level triggered，所以下次调用epoll_wait()时， 只要操作系统层的缓冲区不是满的，就会触发写就绪事件 于是触发第1步注册的write handler，通过write handler把暂存区的数据写到客户端 可能出现暂存区的数据很多，每次只能写一部分，所以redis还会额外记录当前写到哪里了 每触发一次write handler，就从上次的位置继续往后写 暂存区全部写完之后，再把第1步注册的write handler移除掉 以避免level triggered重复触发无效的写就绪事件 下面我们分2部分看：\n注册write handler Write handler的具体逻辑 注册 write handler 关键方法 重点代码截图 networking.c\naddReply()\n1. 通过prepareClientToWrite()注册写事件处理器\n2. 再通过_addReplyToBuffer()往暂存区追加数据 networking.c\nprepareClientToWrite()\n注册client_sock的写事件处理器到epoll networking.c\nsendReplyToClient()\n写处理器 write handler 关键方法 重点代码截图 networking.c\nsendReplyToClient()\n在循环里面调用write()，直到write()返回-1，表示出错或者缓冲区已满 networking.c\nsendReplyToClient()\n1. 通过errno == EAGAIN判断是写缓冲区满了，还是出错了 2. 暂存区写完以后，通过aeDeleteFileEvent()移除之前注册的write handler ",
+  "wordCount" : "2311",
+  "inLanguage": "zh",
+  "datePublished": "2025-05-10T22:51:20+08:00",
+  "dateModified": "2025-05-11T18:23:06+08:00",
+  "author":[{
+    "@type": "Person",
+    "name": "alan"
+  }],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/02-epoll%E7%BC%96%E7%A8%8B%E7%AE%80%E6%9E%90.html"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "文斋",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://al6nlee.github.io/images/system/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://al6nlee.github.io/" accesskey="h" title="文斋 (Alt + H)">文斋</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://al6nlee.github.io/search.html" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://al6nlee.github.io/active.html" title="档案">
+                    <span>档案</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://al6nlee.github.io/categories.html" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://al6nlee.github.io/tags.html" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://al6nlee.github.io/about.html" title="关于">
+                    <span>关于</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      02-epoll编程简析
+    </h1>
+    <div class="post-meta"><span title='2025-05-11 18:23:06 +0800 +0800'>五月 11, 2025</span>&nbsp;·&nbsp;5 分钟&nbsp;·&nbsp;2311 字&nbsp;·&nbsp;alan
+
+</div>
+  </header> <div class="toc">
+    <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">目录</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#c10k%e9%97%ae%e9%a2%98" aria-label="C10K问题">C10K问题</a></li>
+                <li>
+                    <a href="#epoll%e7%bc%96%e7%a8%8b%e6%80%9d%e8%b7%af" aria-label="epoll编程思路">epoll编程思路</a><ul>
+                        
+                <li>
+                    <a href="#%e4%b8%9a%e5%8a%a1%e5%9c%ba%e6%99%af" aria-label="业务场景">业务场景</a></li>
+                <li>
+                    <a href="#%e8%be%b9%e7%bc%98%e6%b0%b4%e5%b9%b3%e8%a7%a6%e5%8f%91" aria-label="边缘/水平触发">边缘/水平触发</a></li></ul>
+                </li>
+                <li>
+                    <a href="#epoll%e6%a1%88%e4%be%8b%e5%88%86%e6%9e%90-redis264" aria-label="epoll案例分析: redis2.6.4">epoll案例分析: redis2.6.4</a><ul>
+                        
+                <li>
+                    <a href="#%e6%b3%a8%e5%86%8clisten_sock%e7%9a%84read-handler" aria-label="注册listen_sock的read handler">注册listen_sock的read handler</a></li>
+                <li>
+                    <a href="#%e5%90%af%e5%8a%a8epoll%e4%b8%bb%e5%be%aa%e7%8e%af" aria-label="启动epoll主循环">启动epoll主循环</a></li>
+                <li>
+                    <a href="#%e8%bf%9e%e6%8e%a5%e5%bb%ba%e7%ab%8b%e6%b5%81%e7%a8%8b" aria-label="连接建立流程">连接建立流程</a></li>
+                <li>
+                    <a href="#%e5%a4%84%e7%90%86%e8%af%b7%e6%b1%82%e6%b5%81%e7%a8%8b" aria-label="处理请求流程">处理请求流程</a></li>
+                <li>
+                    <a href="#%e8%bf%94%e5%9b%9e%e7%bb%93%e6%9e%9c%e6%b5%81%e7%a8%8b" aria-label="返回结果流程">返回结果流程</a><ul>
+                        
+                <li>
+                    <a href="#%e6%b3%a8%e5%86%8c-write-handler" aria-label="注册 write handler">注册 write handler</a></li>
+                <li>
+                    <a href="#write-handler" aria-label="write handler">write handler</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><p>本文简述了epoll出来前，在C10K上的难点问题，阐述了epoll变成思路，最后将redis2.6.4进行了案例分析</p>
+<h2 id="c10k问题">C10K问题<a hidden class="anchor" aria-hidden="true" href="#c10k问题">#</a></h2>
+<p>简单些理解就是: 实现<strong>单机1万长连接</strong></p>
+<ul>
+<li>在epoll之前，问题难点主要是 线程与连接是耦合的，一个连接对应一个线程</li>
+</ul>
+<h2 id="epoll编程思路">epoll编程思路<a hidden class="anchor" aria-hidden="true" href="#epoll编程思路">#</a></h2>
+<h3 id="业务场景">业务场景<a hidden class="anchor" aria-hidden="true" href="#业务场景">#</a></h3>
+<p>作为服务端，我们只需要处理3种情况：</p>
+<ol>
+<li>处理客户端的连接请求</li>
+<li>处理客户端发送的命令</li>
+<li>返回响应给客户端</li>
+</ol>
+<table>
+  <thead>
+      <tr>
+          <th>动作</th>
+          <th>对应事件</th>
+          <th>处理逻辑说明</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>处理客户端连接请求</td>
+          <td>listen_sock上的READABLE事件</td>
+          <td><strong>对应listen_sock的read handler</strong><br><br>1. 新建一个client_sock，完成TCP 3次握手<br>2. 将新的client_sock作为事件源注册到epoll</td>
+      </tr>
+      <tr>
+          <td>处理客户端命令</td>
+          <td>client_sock上的READABLE事件</td>
+          <td><strong>对应client_sock的read handler</strong><br><br>读取客户端发送的命令，解析执行，并返回结果给客户端</td>
+      </tr>
+      <tr>
+          <td>返回应答给客户端</td>
+          <td>client_sock上的WRITABLE事件</td>
+          <td><strong>对应client_sock的write handler</strong><br><br>为了防止发送方发的太快，接收方处理不过来，TCP协议是有一个滑动窗口的。A给B发消息时，会保证发送的内容大小不超过B当前的剩余缓冲区 如果服务端返回结果很大，超过了客户端的当前剩余缓冲区，那就只能先写一部分，并且用一个专门的字段记录写了多少。等到客户端腾出空间了，会再通知服务端。这时候，服务端就会触发<strong>写就绪</strong>事件，再把之前剩余的内容写到客户端</td>
+      </tr>
+  </tbody>
+</table>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#75715e">#define MAX_EVENTS 10
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">epoll_event</span> ev, events[MAX_EVENTS];
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> listen_sock, cAonn_sock, nfds, epollfd;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/* Code to set up listening socket, &#39;listen_sock&#39;,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">  (socket(), bind(), listen()) omitted */</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 创建epoll内部用到的结构
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>epollfd <span style="color:#f92672">=</span> epoll_create1(<span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 将server socket作为一个事件源添加到epoll的监听队列中
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>ev.events <span style="color:#f92672">=</span> EPOLLIN;
+</span></span><span style="display:flex;"><span>ev.data.fd <span style="color:#f92672">=</span> listen_sock;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_sock, <span style="color:#f92672">&amp;</span>ev) <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>   perror(<span style="color:#e6db74">&#34;epoll_ctl: listen_sock&#34;</span>);
+</span></span><span style="display:flex;"><span>   exit(EXIT_FAILURE);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// epoll主循环
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">for</span> (;;) {
+</span></span><span style="display:flex;"><span>   <span style="color:#75715e">// 探测是否有就绪的连接
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>   nfds <span style="color:#f92672">=</span> epoll_wait(epollfd, events, MAX_EVENTS, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>   <span style="color:#75715e">// 对所有就绪的连接，逐个处理连接上的事件
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>   <span style="color:#66d9ef">for</span> (n <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; n <span style="color:#f92672">&lt;</span> nfds; <span style="color:#f92672">++</span>n) {
+</span></span><span style="display:flex;"><span>       <span style="color:#75715e">// 如果是在server socket上发生的事件，
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>       <span style="color:#75715e">// 那一定是有新的客户端要建立连接
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>       <span style="color:#66d9ef">if</span> (events[n].data.fd <span style="color:#f92672">==</span> listen_sock) {
+</span></span><span style="display:flex;"><span>           <span style="color:#75715e">// 完成连接建立
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>           conn_sock <span style="color:#f92672">=</span> accept(listen_sock,
+</span></span><span style="display:flex;"><span>                              (<span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">sockaddr</span> <span style="color:#f92672">*</span>) <span style="color:#f92672">&amp;</span>addr, <span style="color:#f92672">&amp;</span>addrlen);
+</span></span><span style="display:flex;"><span>           <span style="color:#75715e">// 设置非阻塞标记位
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>           setnonblocking(conn_sock);
+</span></span><span style="display:flex;"><span>           ev.events <span style="color:#f92672">=</span> EPOLLIN <span style="color:#f92672">|</span> EPOLLET;
+</span></span><span style="display:flex;"><span>           ev.data.fd <span style="color:#f92672">=</span> conn_sock;
+</span></span><span style="display:flex;"><span>           <span style="color:#75715e">// 将新建立的连接作为事件源，添加到epoll的监听队列
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>           <span style="color:#66d9ef">if</span> (epoll_ctl(epollfd, EPOLL_CTL_ADD, 
+</span></span><span style="display:flex;"><span>                       conn_sock, <span style="color:#f92672">&amp;</span>ev) <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>               perror(<span style="color:#e6db74">&#34;epoll_ctl: conn_sock&#34;</span>);
+</span></span><span style="display:flex;"><span>               exit(EXIT_FAILURE);
+</span></span><span style="display:flex;"><span>           }
+</span></span><span style="display:flex;"><span>       } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>           <span style="color:#75715e">// 对于读写事件，根据业务需求做相应的处理
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>           do_use_fd(events[n].data.fd);
+</span></span><span style="display:flex;"><span>       }
+</span></span><span style="display:flex;"><span>   }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="边缘水平触发">边缘/水平触发<a hidden class="anchor" aria-hidden="true" href="#边缘水平触发">#</a></h3>
+<p><strong>边缘触发（edge triggered） 和 水平触发（level triggered）</strong></p>
+<p>客户端发过来的命令可能还不完整
+此时，你有2种选择：</p>
+<ol>
+<li>直接不读取缓冲区，等到命令完整了，再一次性读出来</li>
+<li>先把不完整的命令读出来，暂存起来</li>
+</ol>
+<p>默认情况下，只要缓冲区有数据，就会触发事件</p>
+<ul>
+<li>第一种方式下，如果命令一直不完整，就会一直重复触发事件，影响性能</li>
+<li>第二种方式下，因为已经读了缓冲区，所以不会重复触发事件，性能好，但需要自己维护一个暂存区，比较麻烦</li>
+</ul>
+<p>由此，对应epoll的2种事件触发类型</p>
+<table>
+  <thead>
+      <tr>
+          <th>触发类型</th>
+          <th>触发规则</th>
+          <th>优缺点</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>水平触发</td>
+          <td>只要可以读/写，就不断触发<br><br>1. 读 只要读缓冲区有数据就触发<br>2. 写 只要写缓冲区不满就触发</td>
+          <td>有无效触发，性能差<br>不需要自己维护暂存区，编程简单</td>
+      </tr>
+      <tr>
+          <td>边缘触发</td>
+          <td>状态变化才触发<br><br>1. 读 从不可读变成可读才触发 读缓冲区从没有数据变成有数据才触发 如果前一次的数据没读完，又来了新数据，是不触发的    <br>2. 写 从不可写变成可写才触发 写缓冲区从没有剩余空间变成有剩余空间</td>
+          <td>没有无效触发，性能好<br>需要自己维护暂存区，编程复杂</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="epoll案例分析-redis264">epoll案例分析: redis2.6.4<a hidden class="anchor" aria-hidden="true" href="#epoll案例分析-redis264">#</a></h2>
+<h3 id="注册listen_sock的read-handler">注册listen_sock的read handler<a hidden class="anchor" aria-hidden="true" href="#注册listen_sock的read-handler">#</a></h3>
+<table>
+  <thead>
+      <tr>
+          <th>关键方法</th>
+          <th>重点代码截图</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>redis.c<br><strong>main()</strong></td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511174049.png"></td>
+      </tr>
+      <tr>
+          <td>redis.c<br><strong>initServer()</strong><br><br>注册listen_sock的读就绪事件处理器acceptTcpHandler()，<br>后续会具体分析这个处理器</td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511174120.png"></td>
+      </tr>
+      <tr>
+          <td>ae.c<br><strong>aeCreateFileEvent()</strong></td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511174136.png"></td>
+      </tr>
+      <tr>
+          <td>ae_epoll.c<br><strong>aeApiAddEvent()</strong></td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511174144.png"></td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="启动epoll主循环">启动epoll主循环<a hidden class="anchor" aria-hidden="true" href="#启动epoll主循环">#</a></h3>
+<table>
+  <thead>
+      <tr>
+          <th>关键方法</th>
+          <th>重点代码截图</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>redis.c<br><strong>main()</strong></td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511174254.png"></td>
+      </tr>
+      <tr>
+          <td>ae.c<br><strong>aeMain()</strong></td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511174303.png"></td>
+      </tr>
+      <tr>
+          <td>ae.c<br><strong>aeProcessEvents()</strong><br><br>注意：<br>1. fe-&gt;rfileProc 对应读就绪事件的handler<br>2. fe-&gt;wfileProc 对应写就绪事件的handler</td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511174312.png"></td>
+      </tr>
+      <tr>
+          <td>ae_epoll.c<br><strong>aeApiPoll()</strong></td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511174321.png"></td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="连接建立流程">连接建立流程<a hidden class="anchor" aria-hidden="true" href="#连接建立流程">#</a></h3>
+<p>客户端和服务端建立连接的过程，对应的就是listen_sock的read handler</p>
+<table>
+  <thead>
+      <tr>
+          <th>关键方法</th>
+          <th>重点代码截图</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>networking.c<br><strong>acceptTcpHandler()</strong><br><br>1. 完成连接建立（3次握手）<br>2. 通过acceptCommonHandler()完成后续操作</td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511175939.png"></td>
+      </tr>
+      <tr>
+          <td>networking.c<br><strong>acceptCommonHandler()</strong></td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511180010.png"></td>
+      </tr>
+      <tr>
+          <td>networking.c<br><strong>createClient()</strong><br><br>注册新创建的client_sock的读事件处理器到epoll</td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511180026.png"></td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="处理请求流程">处理请求流程<a hidden class="anchor" aria-hidden="true" href="#处理请求流程">#</a></h3>
+<p>请求处理流程，对应的就是client_sock的read handler</p>
+<table>
+  <thead>
+      <tr>
+          <th>关键方法</th>
+          <th>重点代码截图</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>networking.c<br><strong>readQueryFromClient()</strong><br><br>读取客户端请求，并调用**processInputBuffer()**处理</td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511180124.png"><br><br><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511180132.png"></td>
+      </tr>
+      <tr>
+          <td>networking.c<br><strong>processInputBuffer()</strong></td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511180145.png"></td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="返回结果流程">返回结果流程<a hidden class="anchor" aria-hidden="true" href="#返回结果流程">#</a></h3>
+<p>返回结果时，不是直接通过write()写数据到客户端，而是同样走epoll</p>
+<ol>
+<li>先注册client_sock的write handler，然后往暂存区追加数据</li>
+<li>由于redis用的是level triggered，所以下次调用epoll_wait()时， 只要操作系统层的缓冲区不是满的，就会触发写就绪事件</li>
+<li>于是触发第1步注册的write handler，通过write handler把暂存区的数据写到客户端 可能出现暂存区的数据很多，每次只能写一部分，所以redis还会额外记录当前写到哪里了 每触发一次write handler，就从上次的位置继续往后写</li>
+<li>暂存区全部写完之后，再把第1步注册的write handler移除掉 以避免level triggered重复触发无效的写就绪事件</li>
+</ol>
+<p>下面我们分2部分看：</p>
+<ol>
+<li>注册write handler</li>
+<li>Write handler的具体逻辑</li>
+</ol>
+<h4 id="注册-write-handler">注册 write handler<a hidden class="anchor" aria-hidden="true" href="#注册-write-handler">#</a></h4>
+<table>
+  <thead>
+      <tr>
+          <th>关键方法</th>
+          <th>重点代码截图</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>networking.c<br><strong>addReply()</strong><br><br>1. 通过prepareClientToWrite()注册写事件处理器<br>2. 再通过_addReplyToBuffer()往暂存区追加数据</td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511180307.png"></td>
+      </tr>
+      <tr>
+          <td>networking.c<br><strong>prepareClientToWrite()</strong><br><br>注册client_sock的写事件处理器到epoll</td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511180319.png"></td>
+      </tr>
+      <tr>
+          <td>networking.c<br><strong>sendReplyToClient()</strong><br><br>写处理器</td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511180342.png"></td>
+      </tr>
+  </tbody>
+</table>
+<h4 id="write-handler">write handler<a hidden class="anchor" aria-hidden="true" href="#write-handler">#</a></h4>
+<table>
+  <thead>
+      <tr>
+          <th>关键方法</th>
+          <th>重点代码截图</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>networking.c<br><strong>sendReplyToClient()</strong><br><br>在循环里面调用write()，直到write()返回-1，表示出错或者缓冲区已满</td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511180424.png"></td>
+      </tr>
+      <tr>
+          <td>networking.c<br><strong>sendReplyToClient()</strong><br><br>1. 通过errno == EAGAIN判断是写缓冲区满了，还是出错了    <br>2. 暂存区写完以后，通过aeDeleteFileEvent()移除之前注册的write handler</td>
+          <td><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250511180433.png"></td>
+      </tr>
+  </tbody>
+</table>
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="https://al6nlee.github.io/tags/%E6%95%B0%E6%8D%AE%E5%BA%93.html">数据库</a></li>
+      <li><a href="https://al6nlee.github.io/tags/redis.html">Redis</a></li>
+      <li><a href="https://al6nlee.github.io/tags/epoll.html">Epoll</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/01-%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3nio.html">
+    <span class="title">« 上一页</span>
+    <br>
+    <span>01-深入了解NIO</span>
+  </a>
+  <a class="next" href="https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/03-redis%E7%BA%BF%E7%A8%8B%E6%BC%94%E8%BF%9B.html">
+    <span class="title">下一页 »</span>
+    <br>
+    <span>03-redis线程演进</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2025 <a href="https://al6nlee.github.io/">文斋</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = '复制';
+
+        function copyingDone() {
+            copybutton.innerHTML = '已复制！';
+            setTimeout(() => {
+                copybutton.innerHTML = '复制';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>Posts on 文斋</title>
-    <link>https://al6nlee.github.io/post.html</link>
-    <description>Recent content in Posts on 文斋</description>
+    <title>Redis on 文斋</title>
+    <link>https://al6nlee.github.io/tags/redis.html</link>
+    <description>Recent content in Redis on 文斋</description>
     <generator>Hugo -- 0.147.2</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 11 May 2025 18:33:52 +0800</lastBuildDate>
-    <atom:link href="https://al6nlee.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 11 May 2025 18:24:00 +0800</lastBuildDate>
+    <atom:link href="https://al6nlee.github.io/tags/redis/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>01-深入了解NIO</title>
       <link>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/01-%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3nio.html</link>
@@ -28,13 +28,6 @@
       <pubDate>Sat, 10 May 2025 22:30:54 +0800</pubDate>
       <guid>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/03-redis%E7%BA%BF%E7%A8%8B%E6%BC%94%E8%BF%9B.html</guid>
       <description>&lt;p&gt;本文讨论了Redis线程模型的演进，从2.6.4版本的单epoll + 单线程到6.0.20版本的单epoll + 多线程，再到8.0版本的多epoll + 多线程，并对Redis 8.0版本的线程模型进行了源码分析。&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>04-redis8.0更新了啥？</title>
-      <link>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/04-redis8.0%E6%9B%B4%E6%96%B0%E4%BA%86%E5%95%A5.html</link>
-      <pubDate>Sun, 11 May 2025 18:16:31 +0800</pubDate>
-      <guid>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/04-redis8.0%E6%9B%B4%E6%96%B0%E4%BA%86%E5%95%A5.html</guid>
-      <description>&lt;p&gt;前不久redis8.0正式发布了，看看都更新了啥?&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

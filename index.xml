@@ -6,14 +6,35 @@
     <description>Recent content on 文斋</description>
     <generator>Hugo -- 0.147.2</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Wed, 01 Jan 2025 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 11 May 2025 18:33:52 +0800</lastBuildDate>
     <atom:link href="https://al6nlee.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Fist blob</title>
-      <link>https://al6nlee.github.io/post/%E6%9D%82%E8%AE%B0/test.html</link>
-      <pubDate>Wed, 01 Jan 2025 00:00:00 +0000</pubDate>
-      <guid>https://al6nlee.github.io/post/%E6%9D%82%E8%AE%B0/test.html</guid>
-      <description>概述: 测试文章</description>
+      <title>01-深入了解NIO</title>
+      <link>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/01-%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3nio.html</link>
+      <pubDate>Sat, 10 May 2025 22:49:50 +0800</pubDate>
+      <guid>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/01-%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3nio.html</guid>
+      <description>&lt;p&gt;探讨了不同IO的演进过程，从传统阻塞IO说起，说到NIO、select、epoll&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>02-epoll编程简析</title>
+      <link>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/02-epoll%E7%BC%96%E7%A8%8B%E7%AE%80%E6%9E%90.html</link>
+      <pubDate>Sat, 10 May 2025 22:51:20 +0800</pubDate>
+      <guid>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/02-epoll%E7%BC%96%E7%A8%8B%E7%AE%80%E6%9E%90.html</guid>
+      <description>&lt;p&gt;本文简述了epoll出来前，在C10K上的难点问题，阐述了epoll变成思路，最后将redis2.6.4进行了案例分析&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>03-redis线程演进</title>
+      <link>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/03-redis%E7%BA%BF%E7%A8%8B%E6%BC%94%E8%BF%9B.html</link>
+      <pubDate>Sat, 10 May 2025 22:30:54 +0800</pubDate>
+      <guid>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/03-redis%E7%BA%BF%E7%A8%8B%E6%BC%94%E8%BF%9B.html</guid>
+      <description>&lt;p&gt;本文讨论了Redis线程模型的演进，从2.6.4版本的单epoll + 单线程到6.0.20版本的单epoll + 多线程，再到8.0版本的多epoll + 多线程，并对Redis 8.0版本的线程模型进行了源码分析。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>04-redis8.0更新了啥？</title>
+      <link>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/04-redis8.0%E6%9B%B4%E6%96%B0%E4%BA%86%E5%95%A5.html</link>
+      <pubDate>Sun, 11 May 2025 18:16:31 +0800</pubDate>
+      <guid>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/04-redis8.0%E6%9B%B4%E6%96%B0%E4%BA%86%E5%95%A5.html</guid>
+      <description>&lt;p&gt;前不久redis8.0正式发布了，看看都更新了啥?&lt;/p&gt;</description>
     </item>
     <item>
       <title>关于作者</title>
