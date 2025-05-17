@@ -2,6 +2,9 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/05-%E8%B8%A9%E5%9D%91.html</loc>
+    <lastmod>2025-05-17T14:00:34+08:00</lastmod>
+  </url><url>
     <loc>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/01-%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3nio.html</loc>
     <lastmod>2025-05-11T18:23:01+08:00</lastmod>
   </url><url>
@@ -14,16 +17,16 @@
     <loc>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/04-redis8.0%E6%9B%B4%E6%96%B0%E4%BA%86%E5%95%A5.html</loc>
     <lastmod>2025-05-11T18:33:52+08:00</lastmod>
   </url><url>
+    <loc>https://al6nlee.github.io/post.html</loc>
+    <lastmod>2025-05-17T14:00:34+08:00</lastmod>
+  </url><url>
+    <loc>https://al6nlee.github.io/</loc>
+    <lastmod>2025-05-17T14:00:34+08:00</lastmod>
+  </url><url>
     <loc>https://al6nlee.github.io/categories.html</loc>
     <lastmod>2025-05-11T18:33:52+08:00</lastmod>
   </url><url>
-    <loc>https://al6nlee.github.io/post.html</loc>
-    <lastmod>2025-05-11T18:33:52+08:00</lastmod>
-  </url><url>
     <loc>https://al6nlee.github.io/categories/redis.html</loc>
-    <lastmod>2025-05-11T18:33:52+08:00</lastmod>
-  </url><url>
-    <loc>https://al6nlee.github.io/</loc>
     <lastmod>2025-05-11T18:33:52+08:00</lastmod>
   </url><url>
     <loc>https://al6nlee.github.io/tags/redis.html</loc>

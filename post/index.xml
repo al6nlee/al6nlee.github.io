@@ -6,8 +6,15 @@
     <description>Recent content in Posts on 文斋</description>
     <generator>Hugo -- 0.147.2</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 11 May 2025 18:33:52 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 17 May 2025 14:00:34 +0800</lastBuildDate>
     <atom:link href="https://al6nlee.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>05-踩坑</title>
+      <link>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/05-%E8%B8%A9%E5%9D%91.html</link>
+      <pubDate>Sat, 17 May 2025 13:53:03 +0800</pubDate>
+      <guid>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/05-%E8%B8%A9%E5%9D%91.html</guid>
+      <description>&lt;p&gt;最近开发中遇到一个关于redis的安全事故，本身服务是放在内网，通过端口转发的，redis也就没有设置密码，万万没想到~~ 出事了！！&lt;/p&gt;</description>
+    </item>
     <item>
       <title>01-深入了解NIO</title>
       <link>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/01-%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3nio.html</link>
