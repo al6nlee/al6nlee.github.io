@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
 <title>04-redis8.0更新了啥？ | 文斋</title>
-<meta name="keywords" content="">
+<meta name="keywords" content="数据库, redis">
 <meta name="description" content="前不久redis8.0正式发布了，看看都更新了啥?">
 <meta name="author" content="alan">
 <link rel="canonical" href="https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/04-redis8.0%E6%9B%B4%E6%96%B0%E4%BA%86%E5%95%A5.html">
@@ -64,6 +64,8 @@
     <meta property="article:section" content="post">
     <meta property="article:published_time" content="2025-05-11T18:16:31+08:00">
     <meta property="article:modified_time" content="2025-05-11T18:33:52+08:00">
+    <meta property="article:tag" content="数据库">
+    <meta property="article:tag" content="Redis">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="04-redis8.0更新了啥？">
 <meta name="twitter:description" content="前不久redis8.0正式发布了，看看都更新了啥?">
@@ -97,7 +99,7 @@
   "name": "04-redis8.0更新了啥？",
   "description": "前不久redis8.0正式发布了，看看都更新了啥?\n",
   "keywords": [
-    
+    "数据库", "redis"
   ],
   "articleBody": "前不久redis8.0正式发布了，看看都更新了啥?\n新增八种数据结构\n向量集（测试版）、JSON、时间序列，以及 Bloom filter、cuckoo filter、count-min sketch、top-k 和 t-digest 五种概率性结构（其中一些之前作为独立的 Redis 模块提供）\n显著的性能改进\n命令延迟最高降低 87% 通过启用多线程，每秒操作吞吐量提升 2 倍 在 Redis 8 中，我们引入了新的 I/O 线程实现。您可以通过设置 io-threads 配置参数来启用它。默认值为 1。在多核 Intel CPU 上将参数设置为 8 时，我们测量到吞吐量最高提升了 112%。 复制使用的内存最高减少 35% 在 Redis 8 中，我们引入了一种新的复制机制。在复制过程中，我们同时启动两个复制流：一个用于传输主节点，另一个用于传输期间发生的变更流。第二阶段不再被阻塞等待第一阶段完成。 通过水平和垂直扩展，查询处理能力最高提升 16 倍 ",
   "wordCount" : "348",
@@ -232,12 +234,19 @@
 
   <footer class="post-footer">
     <ul class="post-tags">
+      <li><a href="https://al6nlee.github.io/tags/%E6%95%B0%E6%8D%AE%E5%BA%93.html">数据库</a></li>
+      <li><a href="https://al6nlee.github.io/tags/redis.html">Redis</a></li>
     </ul>
 <nav class="paginav">
   <a class="prev" href="https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/03-redis%E7%BA%BF%E7%A8%8B%E6%BC%94%E8%BF%9B.html">
     <span class="title">« 上一页</span>
     <br>
     <span>03-redis线程演进</span>
+  </a>
+  <a class="next" href="https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/05-%E8%B8%A9%E5%9D%91.html">
+    <span class="title">下一页 »</span>
+    <br>
+    <span>05-踩坑</span>
   </a>
 </nav>
 

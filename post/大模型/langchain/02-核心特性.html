@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="zh" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>02-核心特性 | 文斋</title>
+<meta name="keywords" content="langchain, rag, llm">
+<meta name="description" content="本章节主要讲述langchain的一些核心功: ①: 模型返回结构化数据；②: 调用工具；③: 流式运行；④ 调试LLM应用">
+<meta name="author" content="alan">
+<link rel="canonical" href="https://al6nlee.github.io/post/%E5%A4%A7%E6%A8%A1%E5%9E%8B/langchain/02-%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7.html">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.f49d66caae9ea0fd43f21f29e71a8d3e284517ed770f2aa86fa012953ad3c9ef.css" integrity="sha256-9J1myq6eoP1D8h8p5xqNPihFF&#43;13Dyqob6ASlTrTye8=" rel="preload stylesheet" as="style">
+<link rel="icon" href="https://al6nlee.github.io/images/system/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://al6nlee.github.io/images/system/favicon16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://al6nlee.github.io/images/system/favicon32x32.png">
+<link rel="apple-touch-icon" href="https://al6nlee.github.io/images/system/apple-touch-icon.png">
+<link rel="mask-icon" href="https://al6nlee.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh" href="https://al6nlee.github.io/post/%E5%A4%A7%E6%A8%A1%E5%9E%8B/langchain/02-%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7.html">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:url" content="https://al6nlee.github.io/post/%E5%A4%A7%E6%A8%A1%E5%9E%8B/langchain/02-%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7.html">
+  <meta property="og:site_name" content="文斋">
+  <meta property="og:title" content="02-核心特性">
+  <meta property="og:description" content="本章节主要讲述langchain的一些核心功: ①: 模型返回结构化数据；②: 调用工具；③: 流式运行；④ 调试LLM应用">
+  <meta property="og:locale" content="zh-CN">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="post">
+    <meta property="article:published_time" content="2025-05-18T00:06:54+08:00">
+    <meta property="article:modified_time" content="2025-05-18T01:59:02+08:00">
+    <meta property="article:tag" content="Langchain">
+    <meta property="article:tag" content="Rag">
+    <meta property="article:tag" content="Llm">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="02-核心特性">
+<meta name="twitter:description" content="本章节主要讲述langchain的一些核心功: ①: 模型返回结构化数据；②: 调用工具；③: 流式运行；④ 调试LLM应用">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://al6nlee.github.io/post.html"
+    }
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "02-核心特性",
+      "item": "https://al6nlee.github.io/post/%E5%A4%A7%E6%A8%A1%E5%9E%8B/langchain/02-%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7.html"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "02-核心特性",
+  "name": "02-核心特性",
+  "description": "本章节主要讲述langchain的一些核心功: ①: 模型返回结构化数据；②: 调用工具；③: 流式运行；④ 调试LLM应用\n",
+  "keywords": [
+    "langchain", "rag", "llm"
+  ],
+  "articleBody": "本章节主要讲述langchain的一些核心功: ①: 模型返回结构化数据；②: 调用工具；③: 流式运行；④ 调试LLM应用\n从模型返回结构化数据 with_structured_output基础应用 选择模型，大前提已经安装好了 pip install -qU \"langchain[openai]\"\nimport getpass import os if not os.environ.get(\"OPENAI_API_KEY\"): os.environ[\"OPENAI_API_KEY\"] = getpass.getpass(\"Enter API key for OpenAI: \") from langchain.chat_models import init_chat_model llm = init_chat_model(\"gpt-4o-mini\", model_provider=\"openai\") 希望返回一个 Pydantic 对象\n使用 Pydantic 的主要优势是模型生成的输出将被验证。如果任何必需字段缺失或字段类型错误，Pydantic 会抛出错误。 注意: 除了 Pydantic 类的结构之外，Pydantic 类的名称、文档字符串以及参数的名称和提供的描述都非常重要。 from typing import Optional from pydantic import BaseModel, Field class Joke(BaseModel): \"\"\"Joke to tell user.\"\"\" setup: str = Field(description=\"The setup of the joke\") punchline: str = Field(description=\"The punchline to the joke\") rating: Optional[int] = Field( default=None, description=\"How funny the joke is, from 1 to 10\" ) structured_llm = llm.with_structured_output(Joke) structured_llm.invoke(\"Tell me a joke about cats\") \"\"\" Joke(setup='Why was the cat sitting on the computer?', punchline='Because it wanted to keep an eye on the mouse!', rating=7) \"\"\" 希望返回的是一个 TypedDict 或 JSON Schema，选择使用 LangChain 支持的一种特殊 Annotated 语法，该语法允许您指定字段的默认值和描述。请注意，如果模型未生成默认值，则不会自动填充默认值，它仅用于定义传递给模型的架构。\nfrom typing import Optional from typing_extensions import Annotated, TypedDict # TypedDict class Joke(TypedDict): \"\"\"Joke to tell user.\"\"\" setup: Annotated[str, ..., \"The setup of the joke\"] # Alternatively, we could have specified setup as: # setup: str # no default, no description # setup: Annotated[str, ...] # no default, no description # setup: Annotated[str, \"foo\"] # default, no description punchline: Annotated[str, ..., \"The punchline of the joke\"] rating: Annotated[Optional[int], None, \"How funny the joke is, from 1 to 10\"] structured_llm = llm.with_structured_output(Joke) structured_llm.invoke(\"Tell me a joke about cats\") \"\"\" {'setup': 'Why was the cat sitting on the computer?', 'punchline': 'Because it wanted to keep an eye on the mouse!', 'rating': 7} \"\"\" json_schema = { \"title\": \"joke\", \"description\": \"Joke to tell user.\", \"type\": \"object\", \"properties\": { \"setup\": { \"type\": \"string\", \"description\": \"The setup of the joke\", }, \"punchline\": { \"type\": \"string\", \"description\": \"The punchline to the joke\", }, \"rating\": { \"type\": \"integer\", \"description\": \"How funny the joke is, from 1 to 10\", \"default\": None, }, }, \"required\": [\"setup\", \"punchline\"], } structured_llm = llm.with_structured_output(json_schema) structured_llm.invoke(\"Tell me a joke about cats\") \"\"\" {'setup': 'Why was the cat sitting on the computer?', 'punchline': 'Because it wanted to keep an eye on the mouse!', 'rating': 7} \"\"\" 使用 Unio 类型属性，让模型可以从多个Pydantic模型之间进行选择\nfrom typing import Union class Joke(BaseModel): \"\"\"Joke to tell user.\"\"\" setup: str = Field(description=\"The setup of the joke\") punchline: str = Field(description=\"The punchline to the joke\") rating: Optional[int] = Field( default=None, description=\"How funny the joke is, from 1 to 10\" ) class ConversationalResponse(BaseModel): \"\"\"Respond in a conversational manner. Be kind and helpful.\"\"\" response: str = Field(description=\"A conversational response to the user's query\") class FinalResponse(BaseModel): final_output: Union[Joke, ConversationalResponse] structured_llm = llm.with_structured_output(FinalResponse) structured_llm.invoke(\"Tell me a joke about cats\") \"\"\" FinalResponse(final_output=Joke(setup='Why was the cat sitting on the computer?', punchline='Because it wanted to keep an eye on the mouse!', rating=7)) \"\"\" structured_llm.invoke(\"How are you today?\") \"\"\" FinalResponse(final_output=ConversationalResponse(response=\"I'm just a computer program, so I don't have feelings, but I'm here and ready to help you with whatever you need!\")) \"\"\" 流式输出: 当输出类型是字典时（即，当模式被指定为 TypedDict 类或 JSON Schema 字典时），我们可以从结构化模型中流式输出。\nfrom typing_extensions import Annotated, TypedDict # TypedDict class Joke(TypedDict): \"\"\"Joke to tell user.\"\"\" setup: Annotated[str, ..., \"The setup of the joke\"] punchline: Annotated[str, ..., \"The punchline of the joke\"] rating: Annotated[Optional[int], None, \"How funny the joke is, from 1 to 10\"] structured_llm = llm.with_structured_output(Joke) for chunk in structured_llm.stream(\"Tell me a joke about cats\"): print(chunk) \"\"\" {} {'setup': ''} {'setup': 'Why'} {'setup': 'Why was'} {'setup': 'Why was the'} {'setup': 'Why was the cat'} {'setup': 'Why was the cat sitting'} {'setup': 'Why was the cat sitting on'} {'setup': 'Why was the cat sitting on the'} {'setup': 'Why was the cat sitting on the computer'} {'setup': 'Why was the cat sitting on the computer?'} {'setup': 'Why was the cat sitting on the computer?', 'punchline': ''} {'setup': 'Why was the cat sitting on the computer?', 'punchline': 'Because'} {'setup': 'Why was the cat sitting on the computer?', 'punchline': 'Because it'} ... \"\"\" 少样本提示，对于复杂的场景，需要加入少量的示例\n最简单的方式，使用prompt，直接隐式将消息传入了\nfrom langchain_core.prompts import ChatPromptTemplate system = \"\"\"You are a hilarious comedian. Your specialty is knock-knock jokes. \\ Return a joke which has the setup (the response to \"Who's there?\") and the final punchline (the response to \" who?\"). Here are some examples of jokes: example_user: Tell me a joke about planes example_assistant: {{\"setup\": \"Why don't planes ever get tired?\", \"punchline\": \"Because they have rest wings!\", \"rating\": 2}} example_user: Tell me another joke about planes example_assistant: {{\"setup\": \"Cargo\", \"punchline\": \"Cargo 'vroom vroom', but planes go 'zoom zoom'!\", \"rating\": 10}} example_user: Now about caterpillars example_assistant: {{\"setup\": \"Caterpillar\", \"punchline\": \"Caterpillar really slow, but watch me turn into a butterfly and steal the show!\", \"rating\": 5}}\"\"\" prompt = ChatPromptTemplate.from_messages([(\"system\", system), (\"human\", \"{input}\")]) few_shot_structured_llm = prompt | structured_llm few_shot_structured_llm.invoke(\"what's something funny about woodpeckers\") \"\"\" {'setup': 'Woodpecker', 'punchline': \"Woodpecker you a joke, but I'm afraid it might be too 'hole-some'!\", 'rating': 7} \"\"\" 显示工具调用传入的方式进行\nfrom langchain_core.messages import AIMessage, HumanMessage, ToolMessage examples = [ HumanMessage(\"Tell me a joke about planes\", name=\"example_user\"), AIMessage( \"\", name=\"example_assistant\", tool_calls=[ { \"name\": \"joke\", \"args\": { \"setup\": \"Why don't planes ever get tired?\", \"punchline\": \"Because they have rest wings!\", \"rating\": 2, }, \"id\": \"1\", } ], ), # Most tool-calling models expect a ToolMessage(s) to follow an AIMessage with tool calls. ToolMessage(\"\", tool_call_id=\"1\"), # Some models also expect an AIMessage to follow any ToolMessages, # so you may need to add an AIMessage here. HumanMessage(\"Tell me another joke about planes\", name=\"example_user\"), AIMessage( \"\", name=\"example_assistant\", tool_calls=[ { \"name\": \"joke\", \"args\": { \"setup\": \"Cargo\", \"punchline\": \"Cargo 'vroom vroom', but planes go 'zoom zoom'!\", \"rating\": 10, }, \"id\": \"2\", } ], ), ToolMessage(\"\", tool_call_id=\"2\"), HumanMessage(\"Now about caterpillars\", name=\"example_user\"), AIMessage( \"\", tool_calls=[ { \"name\": \"joke\", \"args\": { \"setup\": \"Caterpillar\", \"punchline\": \"Caterpillar really slow, but watch me turn into a butterfly and steal the show!\", \"rating\": 5, }, \"id\": \"3\", } ], ), ToolMessage(\"\", tool_call_id=\"3\"), ] system = \"\"\"You are a hilarious comedian. Your specialty is knock-knock jokes. \\ Return a joke which has the setup (the response to \"Who's there?\") \\ and the final punchline (the response to \" who?\").\"\"\" prompt = ChatPromptTemplate.from_messages( [(\"system\", system), (\"placeholder\", \"{examples}\"), (\"human\", \"{input}\")] ) few_shot_structured_llm = prompt | structured_llm few_shot_structured_llm.invoke({\"input\": \"crocodiles\", \"examples\": examples}) \"\"\" {'setup': 'Crocodile', 'punchline': 'Crocodile be seeing you later, alligator!', 'rating': 6} \"\"\" with_structured_output高阶用法 structured_llm = llm.with_structured_output(Joke, include_raw=True) structured_llm.invoke(\"Tell me a joke about cats\") include_raw=True 这会将输出格式更改为包含原始消息输出、 parsed 值（如果成功）以及任何产生的错误\nPydanticOutputParser 并非所有模型都支持 .with_structured_output() ，因为并非所有模型都支持工具调用或 JSON 模式。 -\u003e 直接安排解析器\n注意将 format_instructions 添加到提示词中 from typing import List from langchain_core.output_parsers import PydanticOutputParser from langchain_core.prompts import ChatPromptTemplate from pydantic import BaseModel, Field class Person(BaseModel): \"\"\"Information about a person.\"\"\" name: str = Field(..., description=\"The name of the person\") height_in_meters: float = Field( ..., description=\"The height of the person expressed in meters.\" ) class People(BaseModel): \"\"\"Identifying information about all people in a text.\"\"\" people: List[Person] # Set up a parser parser = PydanticOutputParser(pydantic_object=People) # Prompt prompt = ChatPromptTemplate.from_messages( [ ( \"system\", \"Answer the user query. Wrap the output in `json` tags\\n{format_instructions}\", ), (\"human\", \"{query}\"), ] ).partial(format_instructions=parser.get_format_instructions()) 如果不加解析器 query = \"Anna is 23 years old and she is 6 feet tall\" print(prompt.invoke({\"query\": query}).to_string()) \"\"\" System: Answer the user query. Wrap the output in `json` tags The output should be formatted as a JSON instance that conforms to the JSON schema below. As an example, for the schema {\"properties\": {\"foo\": {\"title\": \"Foo\", \"description\": \"a list of strings\", \"type\": \"array\", \"items\": {\"type\": \"string\"}}}, \"required\": [\"foo\"]} the object {\"foo\": [\"bar\", \"baz\"]} is a well-formatted instance of the schema. The object {\"properties\": {\"foo\": [\"bar\", \"baz\"]}} is not well-formatted. Here is the output schema: \\`\\`\\` {\"description\": \"Identifying information about all people in a text.\", \"properties\": {\"people\": {\"title\": \"People\", \"type\": \"array\", \"items\": {\"$ref\": \"#/definitions/Person\"}}}, \"required\": [\"people\"], \"definitions\": {\"Person\": {\"title\": \"Person\", \"description\": \"Information about a person.\", \"type\": \"object\", \"properties\": {\"name\": {\"title\": \"Name\", \"description\": \"The name of the person\", \"type\": \"string\"}, \"height_in_meters\": {\"title\": \"Height In Meters\", \"description\": \"The height of the person expressed in meters.\", \"type\": \"number\"}}, \"required\": [\"name\", \"height_in_meters\"]}}} \\`\\`\\` Human: Anna is 23 years old and she is 6 feet tall \"\"\" 加上解析器后 chain = prompt | llm | parser chain.invoke({\"query\": query}) \"\"\" People(people=[Person(name='Anna', height_in_meters=1.8288)]) \"\"\" 自定义一个解析器 使用 LangChain 表达式语言 (LCEL) 创建自定义提示和解析器，使用普通函数解析模型的输出\nimport json import re from typing import List from langchain_core.messages import AIMessage from langchain_core.prompts import ChatPromptTemplate from pydantic import BaseModel, Field class Person(BaseModel): \"\"\"Information about a person.\"\"\" name: str = Field(..., description=\"The name of the person\") height_in_meters: float = Field( ..., description=\"The height of the person expressed in meters.\" ) class People(BaseModel): \"\"\"Identifying information about all people in a text.\"\"\" people: List[Person] # Prompt prompt = ChatPromptTemplate.from_messages( [ ( \"system\", \"Answer the user query. Output your answer as JSON that \" \"matches the given schema: \\`\\`\\`json\\n{schema}\\n\\`\\`\\`. \" \"Make sure to wrap the answer in \\`\\`\\`json and \\`\\`\\` tags\", ), (\"human\", \"{query}\"), ] ).partial(schema=People.schema()) # Custom parser def extract_json(message: AIMessage) -\u003e List[dict]: \"\"\"Extracts JSON content from a string where JSON is embedded between \\`\\`\\`json and \\`\\`\\` tags. Parameters: text (str): The text containing the JSON content. Returns: list: A list of extracted JSON strings. \"\"\" text = message.content # Define the regular expression pattern to match JSON blocks pattern = r\"\\`\\`\\`json(.*?)\\`\\`\\`\" # Find all non-overlapping matches of the pattern in the string matches = re.findall(pattern, text, re.DOTALL) # Return the list of matched JSON strings, stripping any leading or trailing whitespace try: return [json.loads(match.strip()) for match in matches] except Exception: raise ValueError(f\"Failed to parse: {message}\") 没使用解析器前\nquery = \"Anna is 23 years old and she is 6 feet tall\" print(prompt.format_prompt(query=query).to_string()) \"\"\" System: Answer the user query. Output your answer as JSON that matches the given schema: \\`\\`\\`json {'title': 'People', 'description': 'Identifying information about all people in a text.', 'type': 'object', 'properties': {'people': {'title': 'People', 'type': 'array', 'items': {'$ref': '#/definitions/Person'}}}, 'required': ['people'], 'definitions': {'Person': {'title': 'Person', 'description': 'Information about a person.', 'type': 'object', 'properties': {'name': {'title': 'Name', 'description': 'The name of the person', 'type': 'string'}, 'height_in_meters': {'title': 'Height In Meters', 'description': 'The height of the person expressed in meters.', 'type': 'number'}}, 'required': ['name', 'height_in_meters']}}} \\`\\`\\`. Make sure to wrap the answer in \\`\\`\\`json and \\`\\`\\` tags Human: Anna is 23 years old and she is 6 feet tall \"\"\" 使用解析器后\nchain = prompt | llm | extract_json chain.invoke({\"query\": query}) \"\"\" [{'people': [{'name': 'Anna', 'height_in_meters': 1.8288}]}] \"\"\" 在聊天过程中将工具调用 定义工具模式 python函数定义: 需要再描述中，详细描述工具的功能以及他的参数是啥？\ndef add(a: int, b: int) -\u003e int: \"\"\"Add two integers. Args: a: First integer b: Second integer \"\"\" return a + b def multiply(a: int, b: int) -\u003e int: \"\"\"Multiply two integers. Args: a: First integer b: Second integer \"\"\" return a * b 使用 Pydantic 类定义\nfrom pydantic import BaseModel, Field class add(BaseModel): \"\"\"Add two integers.\"\"\" a: int = Field(..., description=\"First integer\") b: int = Field(..., description=\"Second integer\") class multiply(BaseModel): \"\"\"Multiply two integers.\"\"\" a: int = Field(..., description=\"First integer\") b: int = Field(..., description=\"Second integer\") 使用 TypedDict 的注解\nfrom typing_extensions import Annotated, TypedDict class add(TypedDict): \"\"\"Add two integers.\"\"\" # Annotations must have the type and can optionally include a default value and description (in that order). a: Annotated[int, ..., \"First integer\"] b: Annotated[int, ..., \"Second integer\"] class multiply(TypedDict): \"\"\"Multiply two integers.\"\"\" a: Annotated[int, ..., \"First integer\"] b: Annotated[int, ..., \"Second integer\"] 模型绑定方法.bind_tools 使用 .bind_tools() 方法，将处理将 add 和 multiply 模式转换为模型的适当格式。工具模式随后将在每次调用模型时传入。\nimport getpass import os if not os.environ.get(\"OPENAI_API_KEY\"): os.environ[\"OPENAI_API_KEY\"] = getpass.getpass(\"Enter API key for OpenAI: \") from langchain.chat_models import init_chat_model llm = init_chat_model(\"gpt-4o-mini\", model_provider=\"openai\") llm_with_tools = llm.bind_tools(tools) query = \"What is 3 * 12?\" llm_with_tools.invoke(query) AIMessage(content='', additional_kwargs={'tool_calls': [{'id': 'call_iXj4DiW1p7WLjTAQMRO0jxMs', 'function': {'arguments': '{\"a\":3,\"b\":12}', 'name': 'multiply'}, 'type': 'function'}], 'refusal': None}, response_metadata={'token_usage': {'completion_tokens': 17, 'prompt_tokens': 80, 'total_tokens': 97}, 'model_name': 'gpt-4o-mini-2024-07-18', 'system_fingerprint': 'fp_483d39d857', 'finish_reason': 'tool_calls', 'logprobs': None}, id='run-0b620986-3f62-4df7-9ba3-4595089f9ad4-0', tool_calls=[{'name': 'multiply', 'args': {'a': 3, 'b': 12}, 'id': 'call_iXj4DiW1p7WLjTAQMRO0jxMs', 'type': 'tool_call'}], usage_metadata={'input_tokens': 80, 'output_tokens': 17, 'total_tokens': 97}) 工具调用 tool_calls 聊天模型可以同时调用多个工具。\n另外请注意，有时模型提供者可能会输出格式错误的工具调用（例如，参数不是有效的 JSON）。在这些情况下解析失败时， .invalid_tool_calls 属性中会填充 InvalidToolCall 实例。 query = \"What is 3 * 12? Also, what is 11 + 49?\" llm_with_tools.invoke(query).tool_calls \"\"\" [{'name': 'multiply', 'args': {'a': 3, 'b': 12}, 'id': 'call_1fyhJAbJHuKQe6n0PacubGsL', 'type': 'tool_call'}, {'name': 'add', 'args': {'a': 11, 'b': 49}, 'id': 'call_fc2jVkKzwuPWyU7kS9qn1hyG', 'type': 'tool_call'}] \"\"\" 流式输出 流式处理对于让基于 LLMs 的应用程序对终端用户感觉响应迅速至关重要。所以重要的 langchain 原生 就支持流式输出接口了。\n同步流 import getpass import os if not os.environ.get(\"OPENAI_API_KEY\"): os.environ[\"OPENAI_API_KEY\"] = getpass.getpass(\"Enter API key for OpenAI: \") from langchain.chat_models import init_chat_model model = init_chat_model(\"gpt-4o-mini\", model_provider=\"openai\") 一般使用流\nchunks = [] for chunk in model.stream(\"what color is the sky?\"): chunks.append(chunk) print(chunk.content, end=\"|\", flush=True) \"\"\" The| sky| appears| blue| during| the| day|.| \"\"\" 异步框架中使用流\nchunks = [] async for chunk in model.astream(\"what color is the sky?\"): chunks.append(chunk) print(chunk.content, end=\"|\", flush=True) \"\"\" The| sky| appears| blue| during| the| day|.| \"\"\" 流里面到底是啥？\nchunks[0] \"\"\" AIMessageChunk(content='The', id='run-b36bea64-5511-4d7a-b6a3-a07b3db0c8e7') \"\"\" 如果在使用流式传输的时候，碰到传输json怎么办？要知道依赖json.loads来解析json，如果消息不完整会解析失败的\n解决方法就是尝试将部分json “自动补全” 为有效状态 from langchain_core.output_parsers import JsonOutputParser chain = ( model | JsonOutputParser() ) # Due to a bug in older versions of Langchain, JsonOutputParser did not stream results from some models async for text in chain.astream( \"output a list of the countries france, spain and japan and their populations in JSON format. \" 'Use a dict with an outer key of \"countries\" which contains a list of countries. ' \"Each country should have the key `name` and `population`\" ): print(text, flush=True) \"\"\" {} {'countries': []} {'countries': [{}]} {'countries': [{'name': ''}]} {'countries': [{'name': 'France'}]} {'countries': [{'name': 'France', 'population': 67}]} {'countries': [{'name': 'France', 'population': 67413}]} {'countries': [{'name': 'France', 'population': 67413000}]} {'countries': [{'name': 'France', 'population': 67413000}, {}]} {'countries': [{'name': 'France', 'population': 67413000}, {'name': ''}]} {'countries': [{'name': 'France', 'population': 67413000}, {'name': 'Spain'}]} ... \"\"\" 生成器与流式输出 from langchain_core.output_parsers import JsonOutputParser async def _extract_country_names_streaming(input_stream): \"\"\"A function that operates on input streams.\"\"\" country_names_so_far = set() async for input in input_stream: if not isinstance(input, dict): continue if \"countries\" not in input: continue countries = input[\"countries\"] if not isinstance(countries, list): continue for country in countries: name = country.get(\"name\") if not name: continue if name not in country_names_so_far: yield name country_names_so_far.add(name) chain = model | JsonOutputParser() | _extract_country_names_streaming async for text in chain.astream( \"output a list of the countries france, spain and japan and their populations in JSON format. \" 'Use a dict with an outer key of \"countries\" which contains a list of countries. ' \"Each country should have the key `name` and `population`\", ): print(text, end=\"|\", flush=True) \"\"\" France|Spain|Japan| \"\"\" 非流式组件想要流式输出 一些内置组件（如检索器）不提供任何 streaming 。但我们又想尝试 stream\n直接给结论，对于这些情况，要么难于实现，要么没有意义，所以如果遇到组件没有提供流式输出的情况，直接等处理完一次性返回 from langchain_community.vectorstores import FAISS from langchain_core.output_parsers import StrOutputParser from langchain_core.prompts import ChatPromptTemplate from langchain_core.runnables import RunnablePassthrough from langchain_openai import OpenAIEmbeddings template = \"\"\"Answer the question based only on the following context: {context} Question: {question} \"\"\" prompt = ChatPromptTemplate.from_template(template) vectorstore = FAISS.from_texts( [\"harrison worked at kensho\", \"harrison likes spicy food\"], embedding=OpenAIEmbeddings(), ) retriever = vectorstore.as_retriever() chunks = [chunk for chunk in retriever.stream(\"where did harrison work?\")] chunks \"\"\" [[Document(page_content='harrison worked at kensho'), Document(page_content='harrison likes spicy food')]] \"\"\" Events 流 这是一个测试版本，暂时先不讨论了吧\n✅ 实时 UI 更新（如前端流式展示） ✅ 日志记录和可视化 ✅ 调试和性能分析 ✅ 实现复杂的控制流或自动化系统 调试 LLM 应用 LLMs构建时，由于链式的调用，导致无法明确在哪个环节产生了错误的输出，最终导致全局的任务失败，所以需要好好调试App\n当下的调试大致有三种方式： 1. 添加打印语句 2. 添加日志语句 3. 使用langsmith追踪 使用langsmith 配置langsmith\nimport getpass import os os.environ[\"LANGSMITH_TRACING\"] = \"true\" os.environ[\"LANGSMITH_API_KEY\"] = getpass.getpass() 配置llm\nimport getpass import os if not os.environ.get(\"OPENAI_API_KEY\"): os.environ[\"OPENAI_API_KEY\"] = getpass.getpass(\"Enter API key for OpenAI: \") from langchain.chat_models import init_chat_model llm = init_chat_model(\"gpt-4o-mini\", model_provider=\"openai\") 调用\nfrom langchain.agents import AgentExecutor, create_tool_calling_agent from langchain_community.tools.tavily_search import TavilySearchResults from langchain_core.prompts import ChatPromptTemplate tools = [TavilySearchResults(max_results=1)] prompt = ChatPromptTemplate.from_messages( [ ( \"system\", \"You are a helpful assistant.\", ), (\"placeholder\", \"{chat_history}\"), (\"human\", \"{input}\"), (\"placeholder\", \"{agent_scratchpad}\"), ] ) # Construct the Tools agent agent = create_tool_calling_agent(llm, tools, prompt) # Create an agent executor by passing in the agent and tools agent_executor = AgentExecutor(agent=agent, tools=tools) agent_executor.invoke( {\"input\": \"Who directed the 2023 film Oppenheimer and what is their age in days?\"} ) \"\"\" {'input': 'Who directed the 2023 film Oppenheimer and what is their age in days?', 'output': 'The 2023 film \"Oppenheimer\" was directed by Christopher Nolan.\\n\\nTo calculate Christopher Nolan\\'s age in days, we first need his birthdate, which is July 30, 1970. Let\\'s calculate his age in days from his birthdate to today\\'s date, December 7, 2023.\\n\\n1. Calculate the total number of days from July 30, 1970, to December 7, 2023.\\n2. Nolan was born on July 30, 1970. From July 30, 1970, to July 30, 2023, is 53 years.\\n3. From July 30, 2023, to December 7, 2023, is 130 days.\\n\\nNow, calculate the total days:\\n- 53 years = 53 x 365 = 19,345 days\\n- Adding leap years from 1970 to 2023: There are 13 leap years (1972, 1976, 1980, 1984, 1988, 1992, 1996, 2000, 2004, 2008, 2012, 2016, 2020). So, add 13 days.\\n- Total days from years and leap years = 19,345 + 13 = 19,358 days\\n- Add the days from July 30, 2023, to December 7, 2023 = 130 days\\n\\nTotal age in days = 19,358 + 130 = 19,488 days\\n\\nChristopher Nolan is 19,488 days old as of December 7, 2023.'} \"\"\" 访问 下面这个 连接可以轻松查看各个模型之间调用的关系 点我看看\n输出中间日志 set_verbose(True) 设置 verbose 标志将以稍微更易读的格式打印输入和输出，并跳过记录某些原始输出（例如 LLM 调用的令牌使用统计信息），以便您专注于应用程序逻辑。\nfrom langchain.globals import set_verbose set_verbose(True) agent_executor = AgentExecutor(agent=agent, tools=tools) agent_executor.invoke( {\"input\": \"Who directed the 2023 film Oppenheimer and what is their age in days?\"} ) set_debug(True) 设置全局 debug 标志将使所有支持回调的 LangChain 组件（链、模型、代理、工具、检索器）打印它们接收到的输入和生成的输出。这是最详细的设置，将完全记录原始输入和输出。\nfrom langchain.globals import set_debug set_debug(True) set_verbose(False) agent_executor = AgentExecutor(agent=agent, tools=tools) agent_executor.invoke( {\"input\": \"Who directed the 2023 film Oppenheimer and what is their age in days?\"} ) ",
+  "wordCount" : "4087",
+  "inLanguage": "zh",
+  "datePublished": "2025-05-18T00:06:54+08:00",
+  "dateModified": "2025-05-18T01:59:02+08:00",
+  "author":[{
+    "@type": "Person",
+    "name": "alan"
+  }],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://al6nlee.github.io/post/%E5%A4%A7%E6%A8%A1%E5%9E%8B/langchain/02-%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7.html"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "文斋",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://al6nlee.github.io/images/system/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://al6nlee.github.io/" accesskey="h" title="文斋 (Alt + H)">文斋</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://al6nlee.github.io/search.html" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://al6nlee.github.io/active.html" title="档案">
+                    <span>档案</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://al6nlee.github.io/categories.html" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://al6nlee.github.io/tags.html" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://al6nlee.github.io/about.html" title="关于">
+                    <span>关于</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      02-核心特性
+    </h1>
+    <div class="post-meta"><span title='2025-05-18 01:59:02 +0800 +0800'>五月 18, 2025</span>&nbsp;·&nbsp;9 分钟&nbsp;·&nbsp;4087 字&nbsp;·&nbsp;alan
+
+</div>
+  </header> <div class="toc">
+    <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">目录</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e4%bb%8e%e6%a8%a1%e5%9e%8b%e8%bf%94%e5%9b%9e%e7%bb%93%e6%9e%84%e5%8c%96%e6%95%b0%e6%8d%ae" aria-label="从模型返回结构化数据">从模型返回结构化数据</a><ul>
+                        
+                <li>
+                    <a href="#with_structured_output%e5%9f%ba%e7%a1%80%e5%ba%94%e7%94%a8" aria-label="with_structured_output基础应用">with_structured_output基础应用</a></li>
+                <li>
+                    <a href="#with_structured_output%e9%ab%98%e9%98%b6%e7%94%a8%e6%b3%95" aria-label="with_structured_output高阶用法">with_structured_output高阶用法</a></li>
+                <li>
+                    <a href="#pydanticoutputparser" aria-label="PydanticOutputParser">PydanticOutputParser</a></li>
+                <li>
+                    <a href="#%e8%87%aa%e5%ae%9a%e4%b9%89%e4%b8%80%e4%b8%aa%e8%a7%a3%e6%9e%90%e5%99%a8" aria-label="自定义一个解析器">自定义一个解析器</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e5%9c%a8%e8%81%8a%e5%a4%a9%e8%bf%87%e7%a8%8b%e4%b8%ad%e5%b0%86%e5%b7%a5%e5%85%b7%e8%b0%83%e7%94%a8" aria-label="在聊天过程中将工具调用">在聊天过程中将工具调用</a><ul>
+                        
+                <li>
+                    <a href="#%e5%ae%9a%e4%b9%89%e5%b7%a5%e5%85%b7%e6%a8%a1%e5%bc%8f" aria-label="定义工具模式">定义工具模式</a></li>
+                <li>
+                    <a href="#%e6%a8%a1%e5%9e%8b%e7%bb%91%e5%ae%9a%e6%96%b9%e6%b3%95bind_tools" aria-label="模型绑定方法.bind_tools">模型绑定方法.bind_tools</a></li>
+                <li>
+                    <a href="#%e5%b7%a5%e5%85%b7%e8%b0%83%e7%94%a8-tool_calls" aria-label="工具调用 tool_calls">工具调用 tool_calls</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e6%b5%81%e5%bc%8f%e8%be%93%e5%87%ba" aria-label="流式输出">流式输出</a><ul>
+                        
+                <li>
+                    <a href="#%e5%90%8c%e6%ad%a5%e6%b5%81" aria-label="同步流">同步流</a><ul>
+                        
+                <li>
+                    <a href="#%e7%94%9f%e6%88%90%e5%99%a8%e4%b8%8e%e6%b5%81%e5%bc%8f%e8%be%93%e5%87%ba" aria-label="生成器与流式输出">生成器与流式输出</a></li>
+                <li>
+                    <a href="#%e9%9d%9e%e6%b5%81%e5%bc%8f%e7%bb%84%e4%bb%b6%e6%83%b3%e8%a6%81%e6%b5%81%e5%bc%8f%e8%be%93%e5%87%ba" aria-label="非流式组件想要流式输出">非流式组件想要流式输出</a></li></ul>
+                </li>
+                <li>
+                    <a href="#events-%e6%b5%81" aria-label="Events 流">Events 流</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e8%b0%83%e8%af%95-llm-%e5%ba%94%e7%94%a8" aria-label="调试 LLM 应用">调试 LLM 应用</a><ul>
+                        
+                <li>
+                    <a href="#%e4%bd%bf%e7%94%a8langsmith" aria-label="使用langsmith">使用langsmith</a></li>
+                <li>
+                    <a href="#%e8%be%93%e5%87%ba%e4%b8%ad%e9%97%b4%e6%97%a5%e5%bf%97" aria-label="输出中间日志">输出中间日志</a><ul>
+                        
+                <li>
+                    <a href="#set_verbosetrue" aria-label="set_verbose(True)">set_verbose(True)</a></li>
+                <li>
+                    <a href="#set_debugtrue" aria-label="set_debug(True)">set_debug(True)</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><p>本章节主要讲述langchain的一些核心功: ①: 模型返回结构化数据；②: 调用工具；③: 流式运行；④ 调试LLM应用</p>
+<h2 id="从模型返回结构化数据">从模型返回结构化数据<a hidden class="anchor" aria-hidden="true" href="#从模型返回结构化数据">#</a></h2>
+<h3 id="with_structured_output基础应用"><code>with_structured_output</code>基础应用<a hidden class="anchor" aria-hidden="true" href="#with_structured_output基础应用">#</a></h3>
+<blockquote>
+<p>选择模型，大前提已经安装好了 <code>pip install -qU &quot;langchain[openai]&quot;</code></p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> getpass
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> os
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> os<span style="color:#f92672">.</span>environ<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>):
+</span></span><span style="display:flex;"><span>  os<span style="color:#f92672">.</span>environ[<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>] <span style="color:#f92672">=</span> getpass<span style="color:#f92672">.</span>getpass(<span style="color:#e6db74">&#34;Enter API key for OpenAI: &#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain.chat_models <span style="color:#f92672">import</span> init_chat_model
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>llm <span style="color:#f92672">=</span> init_chat_model(<span style="color:#e6db74">&#34;gpt-4o-mini&#34;</span>, model_provider<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;openai&#34;</span>)
+</span></span></code></pre></div><blockquote>
+<p>希望返回一个 Pydantic 对象</p></blockquote>
+<ul>
+<li>使用 Pydantic 的主要优势是模型生成的输出将被验证。如果任何必需字段缺失或字段类型错误，Pydantic 会抛出错误。</li>
+<li>注意: 除了 Pydantic 类的结构之外，<strong>Pydantic 类的名称、文档字符串以及参数的名称和提供的描述都非常重要</strong>。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> typing <span style="color:#f92672">import</span> Optional
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> pydantic <span style="color:#f92672">import</span> BaseModel, Field
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Joke</span>(BaseModel):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Joke to tell user.&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    setup: str <span style="color:#f92672">=</span> Field(description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;The setup of the joke&#34;</span>)
+</span></span><span style="display:flex;"><span>    punchline: str <span style="color:#f92672">=</span> Field(description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;The punchline to the joke&#34;</span>)
+</span></span><span style="display:flex;"><span>    rating: Optional[int] <span style="color:#f92672">=</span> Field(
+</span></span><span style="display:flex;"><span>        default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;How funny the joke is, from 1 to 10&#34;</span>
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>structured_llm <span style="color:#f92672">=</span> llm<span style="color:#f92672">.</span>with_structured_output(Joke)
+</span></span><span style="display:flex;"><span>structured_llm<span style="color:#f92672">.</span>invoke(<span style="color:#e6db74">&#34;Tell me a joke about cats&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Joke(setup=&#39;Why was the cat sitting on the computer?&#39;, punchline=&#39;Because it wanted to keep an eye on the mouse!&#39;, rating=7)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><blockquote>
+<p>希望返回的是一个 TypedDict 或 JSON Schema，选择使用 LangChain 支持的一种特殊 <code>Annotated</code> 语法，该语法允许您指定字段的默认值和描述。请注意，如果模型未生成默认值，则不会自动填充默认值，它仅用于定义传递给模型的架构。</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> typing <span style="color:#f92672">import</span> Optional
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> typing_extensions <span style="color:#f92672">import</span> Annotated, TypedDict
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># TypedDict</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Joke</span>(TypedDict):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Joke to tell user.&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    setup: Annotated[str, <span style="color:#f92672">...</span>, <span style="color:#e6db74">&#34;The setup of the joke&#34;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Alternatively, we could have specified setup as:</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># setup: str                    # no default, no description</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># setup: Annotated[str, ...]    # no default, no description</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># setup: Annotated[str, &#34;foo&#34;]  # default, no description</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    punchline: Annotated[str, <span style="color:#f92672">...</span>, <span style="color:#e6db74">&#34;The punchline of the joke&#34;</span>]
+</span></span><span style="display:flex;"><span>    rating: Annotated[Optional[int], <span style="color:#66d9ef">None</span>, <span style="color:#e6db74">&#34;How funny the joke is, from 1 to 10&#34;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>structured_llm <span style="color:#f92672">=</span> llm<span style="color:#f92672">.</span>with_structured_output(Joke)
+</span></span><span style="display:flex;"><span>structured_llm<span style="color:#f92672">.</span>invoke(<span style="color:#e6db74">&#34;Tell me a joke about cats&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Why was the cat sitting on the computer?&#39;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> &#39;punchline&#39;: &#39;Because it wanted to keep an eye on the mouse!&#39;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> &#39;rating&#39;: 7}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>json_schema <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;title&#34;</span>: <span style="color:#e6db74">&#34;joke&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;description&#34;</span>: <span style="color:#e6db74">&#34;Joke to tell user.&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;object&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;properties&#34;</span>: {
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;setup&#34;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;string&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;description&#34;</span>: <span style="color:#e6db74">&#34;The setup of the joke&#34;</span>,
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;punchline&#34;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;string&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;description&#34;</span>: <span style="color:#e6db74">&#34;The punchline to the joke&#34;</span>,
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;rating&#34;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;integer&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;description&#34;</span>: <span style="color:#e6db74">&#34;How funny the joke is, from 1 to 10&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;default&#34;</span>: <span style="color:#66d9ef">None</span>,
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;required&#34;</span>: [<span style="color:#e6db74">&#34;setup&#34;</span>, <span style="color:#e6db74">&#34;punchline&#34;</span>],
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>structured_llm <span style="color:#f92672">=</span> llm<span style="color:#f92672">.</span>with_structured_output(json_schema)
+</span></span><span style="display:flex;"><span>structured_llm<span style="color:#f92672">.</span>invoke(<span style="color:#e6db74">&#34;Tell me a joke about cats&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Why was the cat sitting on the computer?&#39;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> &#39;punchline&#39;: &#39;Because it wanted to keep an eye on the mouse!&#39;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> &#39;rating&#39;: 7}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><blockquote>
+<p>使用 Unio 类型属性，让模型可以从多个Pydantic模型之间进行选择</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> typing <span style="color:#f92672">import</span> Union
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Joke</span>(BaseModel):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Joke to tell user.&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    setup: str <span style="color:#f92672">=</span> Field(description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;The setup of the joke&#34;</span>)
+</span></span><span style="display:flex;"><span>    punchline: str <span style="color:#f92672">=</span> Field(description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;The punchline to the joke&#34;</span>)
+</span></span><span style="display:flex;"><span>    rating: Optional[int] <span style="color:#f92672">=</span> Field(
+</span></span><span style="display:flex;"><span>        default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;How funny the joke is, from 1 to 10&#34;</span>
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ConversationalResponse</span>(BaseModel):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Respond in a conversational manner. Be kind and helpful.&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    response: str <span style="color:#f92672">=</span> Field(description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;A conversational response to the user&#39;s query&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">FinalResponse</span>(BaseModel):
+</span></span><span style="display:flex;"><span>    final_output: Union[Joke, ConversationalResponse]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>structured_llm <span style="color:#f92672">=</span> llm<span style="color:#f92672">.</span>with_structured_output(FinalResponse)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>structured_llm<span style="color:#f92672">.</span>invoke(<span style="color:#e6db74">&#34;Tell me a joke about cats&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">FinalResponse(final_output=Joke(setup=&#39;Why was the cat sitting on the computer?&#39;, punchline=&#39;Because it wanted to keep an eye on the mouse!&#39;, rating=7))
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>structured_llm<span style="color:#f92672">.</span>invoke(<span style="color:#e6db74">&#34;How are you today?&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">FinalResponse(final_output=ConversationalResponse(response=&#34;I&#39;m just a computer program, so I don&#39;t have feelings, but I&#39;m here and ready to help you with whatever you need!&#34;))
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><blockquote>
+<p>流式输出: 当输出类型是字典时（即，当模式被指定为 TypedDict 类或 JSON Schema 字典时），我们可以从结构化模型中流式输出。</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> typing_extensions <span style="color:#f92672">import</span> Annotated, TypedDict
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># TypedDict</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Joke</span>(TypedDict):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Joke to tell user.&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    setup: Annotated[str, <span style="color:#f92672">...</span>, <span style="color:#e6db74">&#34;The setup of the joke&#34;</span>]
+</span></span><span style="display:flex;"><span>    punchline: Annotated[str, <span style="color:#f92672">...</span>, <span style="color:#e6db74">&#34;The punchline of the joke&#34;</span>]
+</span></span><span style="display:flex;"><span>    rating: Annotated[Optional[int], <span style="color:#66d9ef">None</span>, <span style="color:#e6db74">&#34;How funny the joke is, from 1 to 10&#34;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>structured_llm <span style="color:#f92672">=</span> llm<span style="color:#f92672">.</span>with_structured_output(Joke)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> chunk <span style="color:#f92672">in</span> structured_llm<span style="color:#f92672">.</span>stream(<span style="color:#e6db74">&#34;Tell me a joke about cats&#34;</span>):
+</span></span><span style="display:flex;"><span>    print(chunk)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span><span style="color:#e6db74">{}</span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;&#39;}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Why&#39;}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Why was&#39;}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Why was the&#39;}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Why was the cat&#39;}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Why was the cat sitting&#39;}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Why was the cat sitting on&#39;}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Why was the cat sitting on the&#39;}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Why was the cat sitting on the computer&#39;}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Why was the cat sitting on the computer?&#39;}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Why was the cat sitting on the computer?&#39;, &#39;punchline&#39;: &#39;&#39;}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Why was the cat sitting on the computer?&#39;, &#39;punchline&#39;: &#39;Because&#39;}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Why was the cat sitting on the computer?&#39;, &#39;punchline&#39;: &#39;Because it&#39;}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">...
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><blockquote>
+<p>少样本提示，对于复杂的场景，需要加入少量的示例</p></blockquote>
+<ul>
+<li>
+<p>最简单的方式，使用prompt，直接隐式将消息传入了</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.prompts <span style="color:#f92672">import</span> ChatPromptTemplate
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>system <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;You are a hilarious comedian. Your specialty is knock-knock jokes. </span><span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span><span style="color:#e6db74">Return a joke which has the setup (the response to &#34;Who&#39;s there?&#34;) and the final punchline (the response to &#34;&lt;setup&gt; who?&#34;).
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Here are some examples of jokes:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">example_user: Tell me a joke about planes
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">example_assistant: {{&#34;setup&#34;: &#34;Why don&#39;t planes ever get tired?&#34;, &#34;punchline&#34;: &#34;Because they have rest wings!&#34;, &#34;rating&#34;: 2}}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">example_user: Tell me another joke about planes
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">example_assistant: {{&#34;setup&#34;: &#34;Cargo&#34;, &#34;punchline&#34;: &#34;Cargo &#39;vroom vroom&#39;, but planes go &#39;zoom zoom&#39;!&#34;, &#34;rating&#34;: 10}}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">example_user: Now about caterpillars
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">example_assistant: {{&#34;setup&#34;: &#34;Caterpillar&#34;, &#34;punchline&#34;: &#34;Caterpillar really slow, but watch me turn into a butterfly and steal the show!&#34;, &#34;rating&#34;: 5}}&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>prompt <span style="color:#f92672">=</span> ChatPromptTemplate<span style="color:#f92672">.</span>from_messages([(<span style="color:#e6db74">&#34;system&#34;</span>, system), (<span style="color:#e6db74">&#34;human&#34;</span>, <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{input}</span><span style="color:#e6db74">&#34;</span>)])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>few_shot_structured_llm <span style="color:#f92672">=</span> prompt <span style="color:#f92672">|</span> structured_llm
+</span></span><span style="display:flex;"><span>few_shot_structured_llm<span style="color:#f92672">.</span>invoke(<span style="color:#e6db74">&#34;what&#39;s something funny about woodpeckers&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Woodpecker&#39;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> &#39;punchline&#39;: &#34;Woodpecker you a joke, but I&#39;m afraid it might be too &#39;hole-some&#39;!&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> &#39;rating&#39;: 7}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div></li>
+<li>
+<p>显示工具调用传入的方式进行</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.messages <span style="color:#f92672">import</span> AIMessage, HumanMessage, ToolMessage
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>examples <span style="color:#f92672">=</span> [
+</span></span><span style="display:flex;"><span>    HumanMessage(<span style="color:#e6db74">&#34;Tell me a joke about planes&#34;</span>, name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;example_user&#34;</span>),
+</span></span><span style="display:flex;"><span>    AIMessage(
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>        name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;example_assistant&#34;</span>,
+</span></span><span style="display:flex;"><span>        tool_calls<span style="color:#f92672">=</span>[
+</span></span><span style="display:flex;"><span>            {
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;joke&#34;</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;args&#34;</span>: {
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;setup&#34;</span>: <span style="color:#e6db74">&#34;Why don&#39;t planes ever get tired?&#34;</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;punchline&#34;</span>: <span style="color:#e6db74">&#34;Because they have rest wings!&#34;</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;rating&#34;</span>: <span style="color:#ae81ff">2</span>,
+</span></span><span style="display:flex;"><span>                },
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;1&#34;</span>,
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        ],
+</span></span><span style="display:flex;"><span>    ),
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Most tool-calling models expect a ToolMessage(s) to follow an AIMessage with tool calls.</span>
+</span></span><span style="display:flex;"><span>    ToolMessage(<span style="color:#e6db74">&#34;&#34;</span>, tool_call_id<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;1&#34;</span>),
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Some models also expect an AIMessage to follow any ToolMessages,</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># so you may need to add an AIMessage here.</span>
+</span></span><span style="display:flex;"><span>    HumanMessage(<span style="color:#e6db74">&#34;Tell me another joke about planes&#34;</span>, name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;example_user&#34;</span>),
+</span></span><span style="display:flex;"><span>    AIMessage(
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>        name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;example_assistant&#34;</span>,
+</span></span><span style="display:flex;"><span>        tool_calls<span style="color:#f92672">=</span>[
+</span></span><span style="display:flex;"><span>            {
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;joke&#34;</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;args&#34;</span>: {
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;setup&#34;</span>: <span style="color:#e6db74">&#34;Cargo&#34;</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;punchline&#34;</span>: <span style="color:#e6db74">&#34;Cargo &#39;vroom vroom&#39;, but planes go &#39;zoom zoom&#39;!&#34;</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;rating&#34;</span>: <span style="color:#ae81ff">10</span>,
+</span></span><span style="display:flex;"><span>                },
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;2&#34;</span>,
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        ],
+</span></span><span style="display:flex;"><span>    ),
+</span></span><span style="display:flex;"><span>    ToolMessage(<span style="color:#e6db74">&#34;&#34;</span>, tool_call_id<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;2&#34;</span>),
+</span></span><span style="display:flex;"><span>    HumanMessage(<span style="color:#e6db74">&#34;Now about caterpillars&#34;</span>, name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;example_user&#34;</span>),
+</span></span><span style="display:flex;"><span>    AIMessage(
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>        tool_calls<span style="color:#f92672">=</span>[
+</span></span><span style="display:flex;"><span>            {
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;joke&#34;</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;args&#34;</span>: {
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;setup&#34;</span>: <span style="color:#e6db74">&#34;Caterpillar&#34;</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;punchline&#34;</span>: <span style="color:#e6db74">&#34;Caterpillar really slow, but watch me turn into a butterfly and steal the show!&#34;</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;rating&#34;</span>: <span style="color:#ae81ff">5</span>,
+</span></span><span style="display:flex;"><span>                },
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;3&#34;</span>,
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        ],
+</span></span><span style="display:flex;"><span>    ),
+</span></span><span style="display:flex;"><span>    ToolMessage(<span style="color:#e6db74">&#34;&#34;</span>, tool_call_id<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;3&#34;</span>),
+</span></span><span style="display:flex;"><span>]
+</span></span><span style="display:flex;"><span>system <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;You are a hilarious comedian. Your specialty is knock-knock jokes. </span><span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span><span style="color:#e6db74">Return a joke which has the setup (the response to &#34;Who&#39;s there?&#34;) </span><span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span><span style="color:#e6db74">and the final punchline (the response to &#34;&lt;setup&gt; who?&#34;).&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>prompt <span style="color:#f92672">=</span> ChatPromptTemplate<span style="color:#f92672">.</span>from_messages(
+</span></span><span style="display:flex;"><span>    [(<span style="color:#e6db74">&#34;system&#34;</span>, system), (<span style="color:#e6db74">&#34;placeholder&#34;</span>, <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{examples}</span><span style="color:#e6db74">&#34;</span>), (<span style="color:#e6db74">&#34;human&#34;</span>, <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{input}</span><span style="color:#e6db74">&#34;</span>)]
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>few_shot_structured_llm <span style="color:#f92672">=</span> prompt <span style="color:#f92672">|</span> structured_llm
+</span></span><span style="display:flex;"><span>few_shot_structured_llm<span style="color:#f92672">.</span>invoke({<span style="color:#e6db74">&#34;input&#34;</span>: <span style="color:#e6db74">&#34;crocodiles&#34;</span>, <span style="color:#e6db74">&#34;examples&#34;</span>: examples})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;setup&#39;: &#39;Crocodile&#39;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> &#39;punchline&#39;: &#39;Crocodile be seeing you later, alligator!&#39;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> &#39;rating&#39;: 6}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div></li>
+</ul>
+<h3 id="with_structured_output高阶用法"><code>with_structured_output</code>高阶用法<a hidden class="anchor" aria-hidden="true" href="#with_structured_output高阶用法">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>structured_llm <span style="color:#f92672">=</span> llm<span style="color:#f92672">.</span>with_structured_output(Joke, include_raw<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>structured_llm<span style="color:#f92672">.</span>invoke(<span style="color:#e6db74">&#34;Tell me a joke about cats&#34;</span>)
+</span></span></code></pre></div><blockquote>
+<p><code>include_raw=True</code> 这会将输出格式更改为包含原始消息输出、 <code>parsed</code> 值（如果成功）以及任何产生的错误</p></blockquote>
+<h3 id="pydanticoutputparser"><code>PydanticOutputParser</code><a hidden class="anchor" aria-hidden="true" href="#pydanticoutputparser">#</a></h3>
+<p>并非所有模型都支持 <code>.with_structured_output()</code> ，因为并非所有模型都支持工具调用或 JSON 模式。 -&gt; 直接安排解析器</p>
+<ul>
+<li>注意将 format_instructions 添加到提示词中</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> typing <span style="color:#f92672">import</span> List
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.output_parsers <span style="color:#f92672">import</span> PydanticOutputParser
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.prompts <span style="color:#f92672">import</span> ChatPromptTemplate
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> pydantic <span style="color:#f92672">import</span> BaseModel, Field
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Person</span>(BaseModel):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Information about a person.&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    name: str <span style="color:#f92672">=</span> Field(<span style="color:#f92672">...</span>, description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;The name of the person&#34;</span>)
+</span></span><span style="display:flex;"><span>    height_in_meters: float <span style="color:#f92672">=</span> Field(
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">...</span>, description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;The height of the person expressed in meters.&#34;</span>
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">People</span>(BaseModel):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Identifying information about all people in a text.&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    people: List[Person]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Set up a parser</span>
+</span></span><span style="display:flex;"><span>parser <span style="color:#f92672">=</span> PydanticOutputParser(pydantic_object<span style="color:#f92672">=</span>People)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Prompt</span>
+</span></span><span style="display:flex;"><span>prompt <span style="color:#f92672">=</span> ChatPromptTemplate<span style="color:#f92672">.</span>from_messages(
+</span></span><span style="display:flex;"><span>    [
+</span></span><span style="display:flex;"><span>        (
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;system&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;Answer the user query. Wrap the output in `json` tags</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">{format_instructions}</span><span style="color:#e6db74">&#34;</span>,
+</span></span><span style="display:flex;"><span>        ),
+</span></span><span style="display:flex;"><span>        (<span style="color:#e6db74">&#34;human&#34;</span>, <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{query}</span><span style="color:#e6db74">&#34;</span>),
+</span></span><span style="display:flex;"><span>    ]
+</span></span><span style="display:flex;"><span>)<span style="color:#f92672">.</span>partial(format_instructions<span style="color:#f92672">=</span>parser<span style="color:#f92672">.</span>get_format_instructions())
+</span></span></code></pre></div><ul>
+<li>如果不加解析器
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>query <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Anna is 23 years old and she is 6 feet tall&#34;</span>
+</span></span><span style="display:flex;"><span>print(prompt<span style="color:#f92672">.</span>invoke({<span style="color:#e6db74">&#34;query&#34;</span>: query})<span style="color:#f92672">.</span>to_string())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">System: Answer the user query. Wrap the output in `json` tags
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">The output should be formatted as a JSON instance that conforms to the JSON schema below.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">As an example, for the schema {&#34;properties&#34;: {&#34;foo&#34;: {&#34;title&#34;: &#34;Foo&#34;, &#34;description&#34;: &#34;a list of strings&#34;, &#34;type&#34;: &#34;array&#34;, &#34;items&#34;: {&#34;type&#34;: &#34;string&#34;}}}, &#34;required&#34;: [&#34;foo&#34;]}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">the object {&#34;foo&#34;: [&#34;bar&#34;, &#34;baz&#34;]} is a well-formatted instance of the schema. The object {&#34;properties&#34;: {&#34;foo&#34;: [&#34;bar&#34;, &#34;baz&#34;]}} is not well-formatted.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Here is the output schema:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">\`\`\`
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#34;description&#34;: &#34;Identifying information about all people in a text.&#34;, &#34;properties&#34;: {&#34;people&#34;: {&#34;title&#34;: &#34;People&#34;, &#34;type&#34;: &#34;array&#34;, &#34;items&#34;: {&#34;$ref&#34;: &#34;#/definitions/Person&#34;}}}, &#34;required&#34;: [&#34;people&#34;], &#34;definitions&#34;: {&#34;Person&#34;: {&#34;title&#34;: &#34;Person&#34;, &#34;description&#34;: &#34;Information about a person.&#34;, &#34;type&#34;: &#34;object&#34;, &#34;properties&#34;: {&#34;name&#34;: {&#34;title&#34;: &#34;Name&#34;, &#34;description&#34;: &#34;The name of the person&#34;, &#34;type&#34;: &#34;string&#34;}, &#34;height_in_meters&#34;: {&#34;title&#34;: &#34;Height In Meters&#34;, &#34;description&#34;: &#34;The height of the person expressed in meters.&#34;, &#34;type&#34;: &#34;number&#34;}}, &#34;required&#34;: [&#34;name&#34;, &#34;height_in_meters&#34;]}}}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">\`\`\`
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Human: Anna is 23 years old and she is 6 feet tall
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div></li>
+<li>加上解析器后
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>chain <span style="color:#f92672">=</span> prompt <span style="color:#f92672">|</span> llm <span style="color:#f92672">|</span> parser
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>chain<span style="color:#f92672">.</span>invoke({<span style="color:#e6db74">&#34;query&#34;</span>: query})
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">People(people=[Person(name=&#39;Anna&#39;, height_in_meters=1.8288)])
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div></li>
+</ul>
+<h3 id="自定义一个解析器">自定义一个解析器<a hidden class="anchor" aria-hidden="true" href="#自定义一个解析器">#</a></h3>
+<blockquote>
+<p>使用 LangChain 表达式语言 (LCEL) 创建自定义提示和解析器，使用普通函数解析模型的输出</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> json
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> re
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> typing <span style="color:#f92672">import</span> List
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.messages <span style="color:#f92672">import</span> AIMessage
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.prompts <span style="color:#f92672">import</span> ChatPromptTemplate
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> pydantic <span style="color:#f92672">import</span> BaseModel, Field
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Person</span>(BaseModel):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Information about a person.&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    name: str <span style="color:#f92672">=</span> Field(<span style="color:#f92672">...</span>, description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;The name of the person&#34;</span>)
+</span></span><span style="display:flex;"><span>    height_in_meters: float <span style="color:#f92672">=</span> Field(
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">...</span>, description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;The height of the person expressed in meters.&#34;</span>
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">People</span>(BaseModel):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Identifying information about all people in a text.&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    people: List[Person]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Prompt</span>
+</span></span><span style="display:flex;"><span>prompt <span style="color:#f92672">=</span> ChatPromptTemplate<span style="color:#f92672">.</span>from_messages(
+</span></span><span style="display:flex;"><span>    [
+</span></span><span style="display:flex;"><span>        (
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;system&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;Answer the user query. Output your answer as JSON that  &#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;matches the given schema: \`\`\`json</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">{schema}</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">\`\`\`. &#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;Make sure to wrap the answer in \`\`\`json and \`\`\` tags&#34;</span>,
+</span></span><span style="display:flex;"><span>        ),
+</span></span><span style="display:flex;"><span>        (<span style="color:#e6db74">&#34;human&#34;</span>, <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{query}</span><span style="color:#e6db74">&#34;</span>),
+</span></span><span style="display:flex;"><span>    ]
+</span></span><span style="display:flex;"><span>)<span style="color:#f92672">.</span>partial(schema<span style="color:#f92672">=</span>People<span style="color:#f92672">.</span>schema())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Custom parser</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">extract_json</span>(message: AIMessage) <span style="color:#f92672">-&gt;</span> List[dict]:
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Extracts JSON content from a string where JSON is embedded between \`\`\`json and \`\`\` tags.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Parameters:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        text (str): The text containing the JSON content.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Returns:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        list: A list of extracted JSON strings.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>    text <span style="color:#f92672">=</span> message<span style="color:#f92672">.</span>content
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Define the regular expression pattern to match JSON blocks</span>
+</span></span><span style="display:flex;"><span>    pattern <span style="color:#f92672">=</span> <span style="color:#e6db74">r</span><span style="color:#e6db74">&#34;\`\`\`json(.*?)\`\`\`&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Find all non-overlapping matches of the pattern in the string</span>
+</span></span><span style="display:flex;"><span>    matches <span style="color:#f92672">=</span> re<span style="color:#f92672">.</span>findall(pattern, text, re<span style="color:#f92672">.</span>DOTALL)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Return the list of matched JSON strings, stripping any leading or trailing whitespace</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> [json<span style="color:#f92672">.</span>loads(<span style="color:#66d9ef">match</span><span style="color:#f92672">.</span>strip()) <span style="color:#66d9ef">for</span> <span style="color:#66d9ef">match</span> <span style="color:#f92672">in</span> matches]
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">except</span> <span style="color:#a6e22e">Exception</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">ValueError</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Failed to parse: </span><span style="color:#e6db74">{</span>message<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span></code></pre></div><blockquote>
+<p>没使用解析器前</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>query <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Anna is 23 years old and she is 6 feet tall&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(prompt<span style="color:#f92672">.</span>format_prompt(query<span style="color:#f92672">=</span>query)<span style="color:#f92672">.</span>to_string())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">System: Answer the user query. Output your answer as JSON that  matches the given schema: \`\`\`json
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;title&#39;: &#39;People&#39;, &#39;description&#39;: &#39;Identifying information about all people in a text.&#39;, &#39;type&#39;: &#39;object&#39;, &#39;properties&#39;: {&#39;people&#39;: {&#39;title&#39;: &#39;People&#39;, &#39;type&#39;: &#39;array&#39;, &#39;items&#39;: {&#39;$ref&#39;: &#39;#/definitions/Person&#39;}}}, &#39;required&#39;: [&#39;people&#39;], &#39;definitions&#39;: {&#39;Person&#39;: {&#39;title&#39;: &#39;Person&#39;, &#39;description&#39;: &#39;Information about a person.&#39;, &#39;type&#39;: &#39;object&#39;, &#39;properties&#39;: {&#39;name&#39;: {&#39;title&#39;: &#39;Name&#39;, &#39;description&#39;: &#39;The name of the person&#39;, &#39;type&#39;: &#39;string&#39;}, &#39;height_in_meters&#39;: {&#39;title&#39;: &#39;Height In Meters&#39;, &#39;description&#39;: &#39;The height of the person expressed in meters.&#39;, &#39;type&#39;: &#39;number&#39;}}, &#39;required&#39;: [&#39;name&#39;, &#39;height_in_meters&#39;]}}}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">\`\`\`. Make sure to wrap the answer in \`\`\`json and \`\`\` tags
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Human: Anna is 23 years old and she is 6 feet tall
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><blockquote>
+<p>使用解析器后</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>chain <span style="color:#f92672">=</span> prompt <span style="color:#f92672">|</span> llm <span style="color:#f92672">|</span> extract_json
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>chain<span style="color:#f92672">.</span>invoke({<span style="color:#e6db74">&#34;query&#34;</span>: query})
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">[{&#39;people&#39;: [{&#39;name&#39;: &#39;Anna&#39;, &#39;height_in_meters&#39;: 1.8288}]}]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><h2 id="在聊天过程中将工具调用">在聊天过程中将工具调用<a hidden class="anchor" aria-hidden="true" href="#在聊天过程中将工具调用">#</a></h2>
+<p><img loading="lazy" src="../../../resource/images/Pasted%20image%2020250518010859.png"></p>
+<h3 id="定义工具模式">定义工具模式<a hidden class="anchor" aria-hidden="true" href="#定义工具模式">#</a></h3>
+<blockquote>
+<p>python函数定义: 需要再描述中，详细描述工具的功能以及他的参数是啥？</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">add</span>(a: int, b: int) <span style="color:#f92672">-&gt;</span> int:
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Add two integers.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Args:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        a: First integer
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        b: Second integer
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> a <span style="color:#f92672">+</span> b
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">multiply</span>(a: int, b: int) <span style="color:#f92672">-&gt;</span> int:
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Multiply two integers.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Args:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        a: First integer
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        b: Second integer
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> a <span style="color:#f92672">*</span> b
+</span></span></code></pre></div><blockquote>
+<p>使用 Pydantic 类定义</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> pydantic <span style="color:#f92672">import</span> BaseModel, Field
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">add</span>(BaseModel):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Add two integers.&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    a: int <span style="color:#f92672">=</span> Field(<span style="color:#f92672">...</span>, description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;First integer&#34;</span>)
+</span></span><span style="display:flex;"><span>    b: int <span style="color:#f92672">=</span> Field(<span style="color:#f92672">...</span>, description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Second integer&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">multiply</span>(BaseModel):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Multiply two integers.&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    a: int <span style="color:#f92672">=</span> Field(<span style="color:#f92672">...</span>, description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;First integer&#34;</span>)
+</span></span><span style="display:flex;"><span>    b: int <span style="color:#f92672">=</span> Field(<span style="color:#f92672">...</span>, description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Second integer&#34;</span>)
+</span></span></code></pre></div><blockquote>
+<p>使用 TypedDict 的注解</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> typing_extensions <span style="color:#f92672">import</span> Annotated, TypedDict
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">add</span>(TypedDict):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Add two integers.&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Annotations must have the type and can optionally include a default value and description (in that order).</span>
+</span></span><span style="display:flex;"><span>    a: Annotated[int, <span style="color:#f92672">...</span>, <span style="color:#e6db74">&#34;First integer&#34;</span>]
+</span></span><span style="display:flex;"><span>    b: Annotated[int, <span style="color:#f92672">...</span>, <span style="color:#e6db74">&#34;Second integer&#34;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">multiply</span>(TypedDict):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;Multiply two integers.&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    a: Annotated[int, <span style="color:#f92672">...</span>, <span style="color:#e6db74">&#34;First integer&#34;</span>]
+</span></span><span style="display:flex;"><span>    b: Annotated[int, <span style="color:#f92672">...</span>, <span style="color:#e6db74">&#34;Second integer&#34;</span>]
+</span></span></code></pre></div><h3 id="模型绑定方法bind_tools">模型绑定方法<code>.bind_tools</code><a hidden class="anchor" aria-hidden="true" href="#模型绑定方法bind_tools">#</a></h3>
+<p>使用 <code>.bind_tools()</code> 方法，将处理将 <code>add</code> 和 <code>multiply</code> 模式转换为模型的适当格式。工具模式随后将在每次调用模型时传入。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> getpass
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> os
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> os<span style="color:#f92672">.</span>environ<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>):
+</span></span><span style="display:flex;"><span>  os<span style="color:#f92672">.</span>environ[<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>] <span style="color:#f92672">=</span> getpass<span style="color:#f92672">.</span>getpass(<span style="color:#e6db74">&#34;Enter API key for OpenAI: &#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain.chat_models <span style="color:#f92672">import</span> init_chat_model
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>llm <span style="color:#f92672">=</span> init_chat_model(<span style="color:#e6db74">&#34;gpt-4o-mini&#34;</span>, model_provider<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;openai&#34;</span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>llm_with_tools <span style="color:#f92672">=</span> llm<span style="color:#f92672">.</span>bind_tools(tools)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>query <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;What is 3 * 12?&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>llm_with_tools<span style="color:#f92672">.</span>invoke(query)
+</span></span><span style="display:flex;"><span>AIMessage(content<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;&#39;</span>, additional_kwargs<span style="color:#f92672">=</span>{<span style="color:#e6db74">&#39;tool_calls&#39;</span>: [{<span style="color:#e6db74">&#39;id&#39;</span>: <span style="color:#e6db74">&#39;call_iXj4DiW1p7WLjTAQMRO0jxMs&#39;</span>, <span style="color:#e6db74">&#39;function&#39;</span>: {<span style="color:#e6db74">&#39;arguments&#39;</span>: <span style="color:#e6db74">&#39;{&#34;a&#34;:3,&#34;b&#34;:12}&#39;</span>, <span style="color:#e6db74">&#39;name&#39;</span>: <span style="color:#e6db74">&#39;multiply&#39;</span>}, <span style="color:#e6db74">&#39;type&#39;</span>: <span style="color:#e6db74">&#39;function&#39;</span>}], <span style="color:#e6db74">&#39;refusal&#39;</span>: <span style="color:#66d9ef">None</span>}, response_metadata<span style="color:#f92672">=</span>{<span style="color:#e6db74">&#39;token_usage&#39;</span>: {<span style="color:#e6db74">&#39;completion_tokens&#39;</span>: <span style="color:#ae81ff">17</span>, <span style="color:#e6db74">&#39;prompt_tokens&#39;</span>: <span style="color:#ae81ff">80</span>, <span style="color:#e6db74">&#39;total_tokens&#39;</span>: <span style="color:#ae81ff">97</span>}, <span style="color:#e6db74">&#39;model_name&#39;</span>: <span style="color:#e6db74">&#39;gpt-4o-mini-2024-07-18&#39;</span>, <span style="color:#e6db74">&#39;system_fingerprint&#39;</span>: <span style="color:#e6db74">&#39;fp_483d39d857&#39;</span>, <span style="color:#e6db74">&#39;finish_reason&#39;</span>: <span style="color:#e6db74">&#39;tool_calls&#39;</span>, <span style="color:#e6db74">&#39;logprobs&#39;</span>: <span style="color:#66d9ef">None</span>}, id<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;run-0b620986-3f62-4df7-9ba3-4595089f9ad4-0&#39;</span>, tool_calls<span style="color:#f92672">=</span>[{<span style="color:#e6db74">&#39;name&#39;</span>: <span style="color:#e6db74">&#39;multiply&#39;</span>, <span style="color:#e6db74">&#39;args&#39;</span>: {<span style="color:#e6db74">&#39;a&#39;</span>: <span style="color:#ae81ff">3</span>, <span style="color:#e6db74">&#39;b&#39;</span>: <span style="color:#ae81ff">12</span>}, <span style="color:#e6db74">&#39;id&#39;</span>: <span style="color:#e6db74">&#39;call_iXj4DiW1p7WLjTAQMRO0jxMs&#39;</span>, <span style="color:#e6db74">&#39;type&#39;</span>: <span style="color:#e6db74">&#39;tool_call&#39;</span>}], usage_metadata<span style="color:#f92672">=</span>{<span style="color:#e6db74">&#39;input_tokens&#39;</span>: <span style="color:#ae81ff">80</span>, <span style="color:#e6db74">&#39;output_tokens&#39;</span>: <span style="color:#ae81ff">17</span>, <span style="color:#e6db74">&#39;total_tokens&#39;</span>: <span style="color:#ae81ff">97</span>})
+</span></span></code></pre></div><h3 id="工具调用-tool_calls">工具调用 <code>tool_calls</code><a hidden class="anchor" aria-hidden="true" href="#工具调用-tool_calls">#</a></h3>
+<p>聊天模型可以同时调用多个工具。</p>
+<ul>
+<li>另外<strong>请注意</strong>，有时模型提供者可能会输出格式错误的工具调用（例如，参数不是有效的 JSON）。在这些情况下解析失败时， <code>.invalid_tool_calls</code> 属性中会填充 InvalidToolCall 实例。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>query <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;What is 3 * 12? Also, what is 11 + 49?&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>llm_with_tools<span style="color:#f92672">.</span>invoke(query)<span style="color:#f92672">.</span>tool_calls
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">[{&#39;name&#39;: &#39;multiply&#39;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#39;args&#39;: {&#39;a&#39;: 3, &#39;b&#39;: 12},
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#39;id&#39;: &#39;call_1fyhJAbJHuKQe6n0PacubGsL&#39;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#39;type&#39;: &#39;tool_call&#39;},
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> {&#39;name&#39;: &#39;add&#39;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#39;args&#39;: {&#39;a&#39;: 11, &#39;b&#39;: 49},
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#39;id&#39;: &#39;call_fc2jVkKzwuPWyU7kS9qn1hyG&#39;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#39;type&#39;: &#39;tool_call&#39;}]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><h2 id="流式输出">流式输出<a hidden class="anchor" aria-hidden="true" href="#流式输出">#</a></h2>
+<p>流式处理对于让基于 LLMs 的应用程序对终端用户感觉响应迅速至关重要。所以重要的 langchain 原生 就支持流式输出接口了。</p>
+<h3 id="同步流">同步流<a hidden class="anchor" aria-hidden="true" href="#同步流">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> getpass
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> os
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> os<span style="color:#f92672">.</span>environ<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>):
+</span></span><span style="display:flex;"><span>  os<span style="color:#f92672">.</span>environ[<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>] <span style="color:#f92672">=</span> getpass<span style="color:#f92672">.</span>getpass(<span style="color:#e6db74">&#34;Enter API key for OpenAI: &#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain.chat_models <span style="color:#f92672">import</span> init_chat_model
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>model <span style="color:#f92672">=</span> init_chat_model(<span style="color:#e6db74">&#34;gpt-4o-mini&#34;</span>, model_provider<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;openai&#34;</span>)
+</span></span></code></pre></div><blockquote>
+<p>一般使用流</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>chunks <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> chunk <span style="color:#f92672">in</span> model<span style="color:#f92672">.</span>stream(<span style="color:#e6db74">&#34;what color is the sky?&#34;</span>):
+</span></span><span style="display:flex;"><span>    chunks<span style="color:#f92672">.</span>append(chunk)
+</span></span><span style="display:flex;"><span>    print(chunk<span style="color:#f92672">.</span>content, end<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;|&#34;</span>, flush<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">The| sky| appears| blue| during| the| day|.|
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><blockquote>
+<p>异步框架中使用流</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>chunks <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">for</span> chunk <span style="color:#f92672">in</span> model<span style="color:#f92672">.</span>astream(<span style="color:#e6db74">&#34;what color is the sky?&#34;</span>):
+</span></span><span style="display:flex;"><span>    chunks<span style="color:#f92672">.</span>append(chunk)
+</span></span><span style="display:flex;"><span>    print(chunk<span style="color:#f92672">.</span>content, end<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;|&#34;</span>, flush<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">The| sky| appears| blue| during| the| day|.|
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><blockquote>
+<p>流里面到底是啥？</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>chunks[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">AIMessageChunk(content=&#39;The&#39;, id=&#39;run-b36bea64-5511-4d7a-b6a3-a07b3db0c8e7&#39;)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><blockquote>
+<p>如果在使用流式传输的时候，碰到传输json怎么办？要知道依赖json.loads来解析json，如果消息不完整会解析失败的</p></blockquote>
+<ul>
+<li>解决方法就是尝试将部分json &ldquo;自动补全&rdquo; 为有效状态</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.output_parsers <span style="color:#f92672">import</span> JsonOutputParser
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>chain <span style="color:#f92672">=</span> (
+</span></span><span style="display:flex;"><span>    model <span style="color:#f92672">|</span> JsonOutputParser()
+</span></span><span style="display:flex;"><span>)  <span style="color:#75715e"># Due to a bug in older versions of Langchain, JsonOutputParser did not stream results from some models</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">for</span> text <span style="color:#f92672">in</span> chain<span style="color:#f92672">.</span>astream(
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;output a list of the countries france, spain and japan and their populations in JSON format. &#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;Use a dict with an outer key of &#34;countries&#34; which contains a list of countries. &#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;Each country should have the key `name` and `population`&#34;</span>
+</span></span><span style="display:flex;"><span>):
+</span></span><span style="display:flex;"><span>    print(text, flush<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span><span style="color:#e6db74">{}</span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;countries&#39;: []}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;countries&#39;: [</span><span style="color:#e6db74">{}</span><span style="color:#e6db74">]}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;countries&#39;: [{&#39;name&#39;: &#39;&#39;}]}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;countries&#39;: [{&#39;name&#39;: &#39;France&#39;}]}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;countries&#39;: [{&#39;name&#39;: &#39;France&#39;, &#39;population&#39;: 67}]}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;countries&#39;: [{&#39;name&#39;: &#39;France&#39;, &#39;population&#39;: 67413}]}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;countries&#39;: [{&#39;name&#39;: &#39;France&#39;, &#39;population&#39;: 67413000}]}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;countries&#39;: [{&#39;name&#39;: &#39;France&#39;, &#39;population&#39;: 67413000}, </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">]}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;countries&#39;: [{&#39;name&#39;: &#39;France&#39;, &#39;population&#39;: 67413000}, {&#39;name&#39;: &#39;&#39;}]}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;countries&#39;: [{&#39;name&#39;: &#39;France&#39;, &#39;population&#39;: 67413000}, {&#39;name&#39;: &#39;Spain&#39;}]}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">...
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><h4 id="生成器与流式输出">生成器与流式输出<a hidden class="anchor" aria-hidden="true" href="#生成器与流式输出">#</a></h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.output_parsers <span style="color:#f92672">import</span> JsonOutputParser
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_extract_country_names_streaming</span>(input_stream):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;A function that operates on input streams.&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>    country_names_so_far <span style="color:#f92672">=</span> set()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">async</span> <span style="color:#66d9ef">for</span> input <span style="color:#f92672">in</span> input_stream:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> isinstance(input, dict):
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">continue</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#e6db74">&#34;countries&#34;</span> <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> input:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">continue</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        countries <span style="color:#f92672">=</span> input[<span style="color:#e6db74">&#34;countries&#34;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> isinstance(countries, list):
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">continue</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> country <span style="color:#f92672">in</span> countries:
+</span></span><span style="display:flex;"><span>            name <span style="color:#f92672">=</span> country<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#34;name&#34;</span>)
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> name:
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">continue</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> name <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> country_names_so_far:
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">yield</span> name
+</span></span><span style="display:flex;"><span>                country_names_so_far<span style="color:#f92672">.</span>add(name)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>chain <span style="color:#f92672">=</span> model <span style="color:#f92672">|</span> JsonOutputParser() <span style="color:#f92672">|</span> _extract_country_names_streaming
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">for</span> text <span style="color:#f92672">in</span> chain<span style="color:#f92672">.</span>astream(
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;output a list of the countries france, spain and japan and their populations in JSON format. &#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;Use a dict with an outer key of &#34;countries&#34; which contains a list of countries. &#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;Each country should have the key `name` and `population`&#34;</span>,
+</span></span><span style="display:flex;"><span>):
+</span></span><span style="display:flex;"><span>    print(text, end<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;|&#34;</span>, flush<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">France|Spain|Japan|
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><h4 id="非流式组件想要流式输出">非流式组件想要流式输出<a hidden class="anchor" aria-hidden="true" href="#非流式组件想要流式输出">#</a></h4>
+<blockquote>
+<p>一些内置组件（如检索器）不提供任何 <code>streaming</code> 。但我们又想尝试 <code>stream</code></p></blockquote>
+<ul>
+<li>直接给结论，对于这些情况，要么难于实现，要么没有意义，所以如果遇到组件没有提供流式输出的情况，直接等处理完一次性返回</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_community.vectorstores <span style="color:#f92672">import</span> FAISS
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.output_parsers <span style="color:#f92672">import</span> StrOutputParser
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.prompts <span style="color:#f92672">import</span> ChatPromptTemplate
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.runnables <span style="color:#f92672">import</span> RunnablePassthrough
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_openai <span style="color:#f92672">import</span> OpenAIEmbeddings
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>template <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;Answer the question based only on the following context:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span><span style="color:#e6db74">{context}</span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Question: </span><span style="color:#e6db74">{question}</span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>prompt <span style="color:#f92672">=</span> ChatPromptTemplate<span style="color:#f92672">.</span>from_template(template)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>vectorstore <span style="color:#f92672">=</span> FAISS<span style="color:#f92672">.</span>from_texts(
+</span></span><span style="display:flex;"><span>    [<span style="color:#e6db74">&#34;harrison worked at kensho&#34;</span>, <span style="color:#e6db74">&#34;harrison likes spicy food&#34;</span>],
+</span></span><span style="display:flex;"><span>    embedding<span style="color:#f92672">=</span>OpenAIEmbeddings(),
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>retriever <span style="color:#f92672">=</span> vectorstore<span style="color:#f92672">.</span>as_retriever()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>chunks <span style="color:#f92672">=</span> [chunk <span style="color:#66d9ef">for</span> chunk <span style="color:#f92672">in</span> retriever<span style="color:#f92672">.</span>stream(<span style="color:#e6db74">&#34;where did harrison work?&#34;</span>)]
+</span></span><span style="display:flex;"><span>chunks
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">[[Document(page_content=&#39;harrison worked at kensho&#39;),
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Document(page_content=&#39;harrison likes spicy food&#39;)]]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><h3 id="events-流">Events 流<a hidden class="anchor" aria-hidden="true" href="#events-流">#</a></h3>
+<blockquote>
+<p>这是一个测试版本，暂时先不讨论了吧</p></blockquote>
+<ul>
+<li>✅ 实时 UI 更新（如前端流式展示）</li>
+<li>✅ 日志记录和可视化</li>
+<li>✅ 调试和性能分析</li>
+<li>✅ 实现复杂的控制流或自动化系统</li>
+</ul>
+<h2 id="调试-llm-应用">调试 LLM 应用<a hidden class="anchor" aria-hidden="true" href="#调试-llm-应用">#</a></h2>
+<blockquote>
+<p>LLMs构建时，由于链式的调用，导致无法明确在哪个环节产生了错误的输出，最终导致全局的任务失败，所以需要好好调试App</p></blockquote>
+<ul>
+<li>当下的调试大致有三种方式： 1. 添加打印语句 2. 添加日志语句 3. 使用langsmith追踪</li>
+</ul>
+<h3 id="使用langsmith">使用langsmith<a hidden class="anchor" aria-hidden="true" href="#使用langsmith">#</a></h3>
+<blockquote>
+<p>配置langsmith</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> getpass
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> os
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>os<span style="color:#f92672">.</span>environ[<span style="color:#e6db74">&#34;LANGSMITH_TRACING&#34;</span>] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;true&#34;</span>
+</span></span><span style="display:flex;"><span>os<span style="color:#f92672">.</span>environ[<span style="color:#e6db74">&#34;LANGSMITH_API_KEY&#34;</span>] <span style="color:#f92672">=</span> getpass<span style="color:#f92672">.</span>getpass()
+</span></span></code></pre></div><blockquote>
+<p>配置llm</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> getpass
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> os
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> os<span style="color:#f92672">.</span>environ<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>):
+</span></span><span style="display:flex;"><span>  os<span style="color:#f92672">.</span>environ[<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>] <span style="color:#f92672">=</span> getpass<span style="color:#f92672">.</span>getpass(<span style="color:#e6db74">&#34;Enter API key for OpenAI: &#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain.chat_models <span style="color:#f92672">import</span> init_chat_model
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>llm <span style="color:#f92672">=</span> init_chat_model(<span style="color:#e6db74">&#34;gpt-4o-mini&#34;</span>, model_provider<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;openai&#34;</span>)
+</span></span></code></pre></div><blockquote>
+<p>调用</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain.agents <span style="color:#f92672">import</span> AgentExecutor, create_tool_calling_agent
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_community.tools.tavily_search <span style="color:#f92672">import</span> TavilySearchResults
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.prompts <span style="color:#f92672">import</span> ChatPromptTemplate
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>tools <span style="color:#f92672">=</span> [TavilySearchResults(max_results<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)]
+</span></span><span style="display:flex;"><span>prompt <span style="color:#f92672">=</span> ChatPromptTemplate<span style="color:#f92672">.</span>from_messages(
+</span></span><span style="display:flex;"><span>    [
+</span></span><span style="display:flex;"><span>        (
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;system&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;You are a helpful assistant.&#34;</span>,
+</span></span><span style="display:flex;"><span>        ),
+</span></span><span style="display:flex;"><span>        (<span style="color:#e6db74">&#34;placeholder&#34;</span>, <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{chat_history}</span><span style="color:#e6db74">&#34;</span>),
+</span></span><span style="display:flex;"><span>        (<span style="color:#e6db74">&#34;human&#34;</span>, <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{input}</span><span style="color:#e6db74">&#34;</span>),
+</span></span><span style="display:flex;"><span>        (<span style="color:#e6db74">&#34;placeholder&#34;</span>, <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{agent_scratchpad}</span><span style="color:#e6db74">&#34;</span>),
+</span></span><span style="display:flex;"><span>    ]
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Construct the Tools agent</span>
+</span></span><span style="display:flex;"><span>agent <span style="color:#f92672">=</span> create_tool_calling_agent(llm, tools, prompt)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Create an agent executor by passing in the agent and tools</span>
+</span></span><span style="display:flex;"><span>agent_executor <span style="color:#f92672">=</span> AgentExecutor(agent<span style="color:#f92672">=</span>agent, tools<span style="color:#f92672">=</span>tools)
+</span></span><span style="display:flex;"><span>agent_executor<span style="color:#f92672">.</span>invoke(
+</span></span><span style="display:flex;"><span>    {<span style="color:#e6db74">&#34;input&#34;</span>: <span style="color:#e6db74">&#34;Who directed the 2023 film Oppenheimer and what is their age in days?&#34;</span>}
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{&#39;input&#39;: &#39;Who directed the 2023 film Oppenheimer and what is their age in days?&#39;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> &#39;output&#39;: &#39;The 2023 film &#34;Oppenheimer&#34; was directed by Christopher Nolan.</span><span style="color:#ae81ff">\n\n</span><span style="color:#e6db74">To calculate Christopher Nolan</span><span style="color:#ae81ff">\&#39;</span><span style="color:#e6db74">s age in days, we first need his birthdate, which is July 30, 1970. Let</span><span style="color:#ae81ff">\&#39;</span><span style="color:#e6db74">s calculate his age in days from his birthdate to today</span><span style="color:#ae81ff">\&#39;</span><span style="color:#e6db74">s date, December 7, 2023.</span><span style="color:#ae81ff">\n\n</span><span style="color:#e6db74">1. Calculate the total number of days from July 30, 1970, to December 7, 2023.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">2. Nolan was born on July 30, 1970. From July 30, 1970, to July 30, 2023, is 53 years.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">3. From July 30, 2023, to December 7, 2023, is 130 days.</span><span style="color:#ae81ff">\n\n</span><span style="color:#e6db74">Now, calculate the total days:</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">- 53 years = 53 x 365 = 19,345 days</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">- Adding leap years from 1970 to 2023: There are 13 leap years (1972, 1976, 1980, 1984, 1988, 1992, 1996, 2000, 2004, 2008, 2012, 2016, 2020). So, add 13 days.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">- Total days from years and leap years = 19,345 + 13 = 19,358 days</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">- Add the days from July 30, 2023, to December 7, 2023 = 130 days</span><span style="color:#ae81ff">\n\n</span><span style="color:#e6db74">Total age in days = 19,358 + 130 = 19,488 days</span><span style="color:#ae81ff">\n\n</span><span style="color:#e6db74">Christopher Nolan is 19,488 days old as of December 7, 2023.&#39;}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><blockquote>
+<p>访问 下面这个 连接可以轻松查看各个模型之间调用的关系 <a href="https://smith.langchain.com/public/a89ff88f-9ddc-4757-a395-3a1b365655bf/r/651b7869-77af-4def-a2e3-924692273065">点我看看</a></p></blockquote>
+<h3 id="输出中间日志">输出中间日志<a hidden class="anchor" aria-hidden="true" href="#输出中间日志">#</a></h3>
+<h4 id="set_verbosetrue"><code>set_verbose(True)</code><a hidden class="anchor" aria-hidden="true" href="#set_verbosetrue">#</a></h4>
+<blockquote>
+<p>设置 <code>verbose</code> 标志将以稍微更易读的格式打印输入和输出，并跳过记录某些原始输出（例如 LLM 调用的令牌使用统计信息），以便您专注于应用程序逻辑。</p></blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain.globals <span style="color:#f92672">import</span> set_verbose
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>set_verbose(<span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>agent_executor <span style="color:#f92672">=</span> AgentExecutor(agent<span style="color:#f92672">=</span>agent, tools<span style="color:#f92672">=</span>tools)
+</span></span><span style="display:flex;"><span>agent_executor<span style="color:#f92672">.</span>invoke(
+</span></span><span style="display:flex;"><span>    {<span style="color:#e6db74">&#34;input&#34;</span>: <span style="color:#e6db74">&#34;Who directed the 2023 film Oppenheimer and what is their age in days?&#34;</span>}
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><h4 id="set_debugtrue"><code>set_debug(True)</code><a hidden class="anchor" aria-hidden="true" href="#set_debugtrue">#</a></h4>
+<p>设置全局 <code>debug</code> 标志将使所有支持回调的 LangChain 组件（链、模型、代理、工具、检索器）打印它们接收到的输入和生成的输出。<strong>这是最详细的设置</strong>，将完全记录原始输入和输出。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain.globals <span style="color:#f92672">import</span> set_debug
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>set_debug(<span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>set_verbose(<span style="color:#66d9ef">False</span>)
+</span></span><span style="display:flex;"><span>agent_executor <span style="color:#f92672">=</span> AgentExecutor(agent<span style="color:#f92672">=</span>agent, tools<span style="color:#f92672">=</span>tools)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>agent_executor<span style="color:#f92672">.</span>invoke(
+</span></span><span style="display:flex;"><span>    {<span style="color:#e6db74">&#34;input&#34;</span>: <span style="color:#e6db74">&#34;Who directed the 2023 film Oppenheimer and what is their age in days?&#34;</span>}
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div>
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="https://al6nlee.github.io/tags/langchain.html">Langchain</a></li>
+      <li><a href="https://al6nlee.github.io/tags/rag.html">Rag</a></li>
+      <li><a href="https://al6nlee.github.io/tags/llm.html">Llm</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/01-%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3nio.html">
+    <span class="title">« 上一页</span>
+    <br>
+    <span>01-深入了解NIO</span>
+  </a>
+  <a class="next" href="https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/02-epoll%E7%BC%96%E7%A8%8B%E7%AE%80%E6%9E%90.html">
+    <span class="title">下一页 »</span>
+    <br>
+    <span>02-epoll编程简析</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2025 <a href="https://al6nlee.github.io/">文斋</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = '复制';
+
+        function copyingDone() {
+            copybutton.innerHTML = '已复制！';
+            setTimeout(() => {
+                copybutton.innerHTML = '复制';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

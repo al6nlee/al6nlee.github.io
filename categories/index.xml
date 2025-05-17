@@ -6,12 +6,19 @@
     <description>Recent content in Categories on 文斋</description>
     <generator>Hugo -- 0.147.2</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 11 May 2025 18:33:52 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 18 May 2025 01:59:02 +0800</lastBuildDate>
     <atom:link href="https://al6nlee.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Langchain</title>
+      <link>https://al6nlee.github.io/categories/langchain.html</link>
+      <pubDate>Sun, 18 May 2025 00:06:54 +0800</pubDate>
+      <guid>https://al6nlee.github.io/categories/langchain.html</guid>
+      <description></description>
+    </item>
     <item>
       <title>Redis</title>
       <link>https://al6nlee.github.io/categories/redis.html</link>
-      <pubDate>Sun, 11 May 2025 18:16:31 +0800</pubDate>
+      <pubDate>Sat, 17 May 2025 13:53:03 +0800</pubDate>
       <guid>https://al6nlee.github.io/categories/redis.html</guid>
       <description></description>
     </item>

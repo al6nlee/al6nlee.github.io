@@ -6,7 +6,7 @@
     <description>Recent content in Redis on 文斋</description>
     <generator>Hugo -- 0.147.2</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 11 May 2025 18:24:00 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 17 May 2025 22:41:00 +0800</lastBuildDate>
     <atom:link href="https://al6nlee.github.io/tags/redis/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>01-深入了解NIO</title>
@@ -28,6 +28,20 @@
       <pubDate>Sat, 10 May 2025 22:30:54 +0800</pubDate>
       <guid>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/03-redis%E7%BA%BF%E7%A8%8B%E6%BC%94%E8%BF%9B.html</guid>
       <description>&lt;p&gt;本文讨论了Redis线程模型的演进，从2.6.4版本的单epoll + 单线程到6.0.20版本的单epoll + 多线程，再到8.0版本的多epoll + 多线程，并对Redis 8.0版本的线程模型进行了源码分析。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>04-redis8.0更新了啥？</title>
+      <link>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/04-redis8.0%E6%9B%B4%E6%96%B0%E4%BA%86%E5%95%A5.html</link>
+      <pubDate>Sun, 11 May 2025 18:16:31 +0800</pubDate>
+      <guid>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/04-redis8.0%E6%9B%B4%E6%96%B0%E4%BA%86%E5%95%A5.html</guid>
+      <description>&lt;p&gt;前不久redis8.0正式发布了，看看都更新了啥?&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>05-踩坑</title>
+      <link>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/05-%E8%B8%A9%E5%9D%91.html</link>
+      <pubDate>Sat, 17 May 2025 13:53:03 +0800</pubDate>
+      <guid>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/05-%E8%B8%A9%E5%9D%91.html</guid>
+      <description>&lt;p&gt;最近开发中遇到一个关于redis的安全事故，本身服务是放在内网，通过端口转发的，redis也就没有设置密码，万万没想到~~ 出事了！！&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

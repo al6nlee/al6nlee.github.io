@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Llm on 文斋</title>
+    <link>https://al6nlee.github.io/tags/llm.html</link>
+    <description>Recent content in Llm on 文斋</description>
+    <generator>Hugo -- 0.147.2</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Sun, 18 May 2025 01:59:02 +0800</lastBuildDate>
+    <atom:link href="https://al6nlee.github.io/tags/llm/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>01-langchain入门</title>
+      <link>https://al6nlee.github.io/post/%E5%A4%A7%E6%A8%A1%E5%9E%8B/langchain/01-langchain%E5%85%A5%E9%97%A8.html</link>
+      <pubDate>Sat, 17 May 2025 23:09:09 +0800</pubDate>
+      <guid>https://al6nlee.github.io/post/%E5%A4%A7%E6%A8%A1%E5%9E%8B/langchain/01-langchain%E5%85%A5%E9%97%A8.html</guid>
+      <description>&lt;p&gt;最近一阶段，在做知识库相关的应用开发，想着整理下 langchain 与 llamaindex&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>02-核心特性</title>
+      <link>https://al6nlee.github.io/post/%E5%A4%A7%E6%A8%A1%E5%9E%8B/langchain/02-%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7.html</link>
+      <pubDate>Sun, 18 May 2025 00:06:54 +0800</pubDate>
+      <guid>https://al6nlee.github.io/post/%E5%A4%A7%E6%A8%A1%E5%9E%8B/langchain/02-%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7.html</guid>
+      <description>&lt;p&gt;本章节主要讲述langchain的一些核心功: ①: 模型返回结构化数据；②: 调用工具；③: 流式运行；④ 调试LLM应用&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

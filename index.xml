@@ -6,14 +6,14 @@
     <description>Recent content on 文斋</description>
     <generator>Hugo -- 0.147.2</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 17 May 2025 14:00:34 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 18 May 2025 01:59:02 +0800</lastBuildDate>
     <atom:link href="https://al6nlee.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>05-踩坑</title>
-      <link>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/05-%E8%B8%A9%E5%9D%91.html</link>
-      <pubDate>Sat, 17 May 2025 13:53:03 +0800</pubDate>
-      <guid>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/05-%E8%B8%A9%E5%9D%91.html</guid>
-      <description>&lt;p&gt;最近开发中遇到一个关于redis的安全事故，本身服务是放在内网，通过端口转发的，redis也就没有设置密码，万万没想到~~ 出事了！！&lt;/p&gt;</description>
+      <title>01-langchain入门</title>
+      <link>https://al6nlee.github.io/post/%E5%A4%A7%E6%A8%A1%E5%9E%8B/langchain/01-langchain%E5%85%A5%E9%97%A8.html</link>
+      <pubDate>Sat, 17 May 2025 23:09:09 +0800</pubDate>
+      <guid>https://al6nlee.github.io/post/%E5%A4%A7%E6%A8%A1%E5%9E%8B/langchain/01-langchain%E5%85%A5%E9%97%A8.html</guid>
+      <description>&lt;p&gt;最近一阶段，在做知识库相关的应用开发，想着整理下 langchain 与 llamaindex&lt;/p&gt;</description>
     </item>
     <item>
       <title>01-深入了解NIO</title>
@@ -21,6 +21,13 @@
       <pubDate>Sat, 10 May 2025 22:49:50 +0800</pubDate>
       <guid>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/01-%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3nio.html</guid>
       <description>&lt;p&gt;探讨了不同IO的演进过程，从传统阻塞IO说起，说到NIO、select、epoll&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>02-核心特性</title>
+      <link>https://al6nlee.github.io/post/%E5%A4%A7%E6%A8%A1%E5%9E%8B/langchain/02-%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7.html</link>
+      <pubDate>Sun, 18 May 2025 00:06:54 +0800</pubDate>
+      <guid>https://al6nlee.github.io/post/%E5%A4%A7%E6%A8%A1%E5%9E%8B/langchain/02-%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7.html</guid>
+      <description>&lt;p&gt;本章节主要讲述langchain的一些核心功: ①: 模型返回结构化数据；②: 调用工具；③: 流式运行；④ 调试LLM应用&lt;/p&gt;</description>
     </item>
     <item>
       <title>02-epoll编程简析</title>
@@ -42,6 +49,13 @@
       <pubDate>Sun, 11 May 2025 18:16:31 +0800</pubDate>
       <guid>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/04-redis8.0%E6%9B%B4%E6%96%B0%E4%BA%86%E5%95%A5.html</guid>
       <description>&lt;p&gt;前不久redis8.0正式发布了，看看都更新了啥?&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>05-踩坑</title>
+      <link>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/05-%E8%B8%A9%E5%9D%91.html</link>
+      <pubDate>Sat, 17 May 2025 13:53:03 +0800</pubDate>
+      <guid>https://al6nlee.github.io/post/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/05-%E8%B8%A9%E5%9D%91.html</guid>
+      <description>&lt;p&gt;最近开发中遇到一个关于redis的安全事故，本身服务是放在内网，通过端口转发的，redis也就没有设置密码，万万没想到~~ 出事了！！&lt;/p&gt;</description>
     </item>
     <item>
       <title>关于作者</title>
